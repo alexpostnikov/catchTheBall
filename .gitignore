@@ -1,0 +1,11 @@
+__pycache__/
+*__pycache*/
+exp1/
+exp2/
+Hp_log/
+Hp_log_big_PPO/
+Hp_log_big_TRPO/
+Hp_log_big1/
+
+log/
+video/

@@ -1,0 +1,43 @@
+seed: 1
+record_video: no
+
+environment:
+  render: no
+  render_every_n_resets:  500
+  
+  simulation_dt: 0.0025
+  control_dt: 0.01
+  max_time: 7.0
+  learning_rate: 1e-3
+  nminibatches: 10
+  noptepochs: 10
+  eval_every_n: 100
+  init_goal_x: 0.6
+  init_goal_y: 0.3
+  init_goal_z: 2.8
+
+  forceRewardCoeff:         0
+  angularRewardCoeff:       -0.00
+  positionRewardCoeff:      -0.05
+  jerkRewardCoeff:          -0.005
+  collisionRewardCoeff:     -10
+  directionRewardCoeff:     100.0
+  timerewardCoeff:          -0.001
+  
+  windowSizeofJerknessObservations: 20
+
+  terminalReward: 200
+
+  curruclum:
+    use_curruclum: False
+    randInitialPose :         False
+    
+    curriculum_goal_radius:
+      [0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]
+    curriculum_angular_precison:
+      [0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.08, 0.07, 0.06]
+
+    randBalllPose :            True
+    curruclum_step_max: 5
+    ball_pose_distrib: [[0,0,0],[0.01,0.01,0.01],[0.02,0.02,0.02],[0.03,0.03,0.03],[0.04,0.04,0.04],[0.05,0.05,0.05]]
+      
