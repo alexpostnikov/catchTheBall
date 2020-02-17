@@ -91,17 +91,68 @@ class c_TRPO(c_class):
         self.video_folder = video_folder
         self.env = env
         self.algo = TRPO
-        self.model = self.algo(MlpPolicy, self.env, verbose=1, tensorboard_log=video_folder)
+        self.model = self.algo(MlpPolicy, self.env,gamma=0.9, verbose=1, tensorboard_log=video_folder)
+        self.save_model_flag = True
+        self.ep_infos = None
+        self.timestamp = 0
         
     def __call__(self):
         return self
 
     def learning_callback(self,locals, globals):
-        mean_rew = sum(locals["reward_buffer"])/len(locals["reward_buffer"])
-        if mean_rew > self.best_mean_reward:
-            self.best_mean_reward = mean_rew
-            locals["self"].save(self.video_folder+"best_model.pkl")
 
+        # self.timestamp = locals["self"].num_timesteps
+        if  locals["self"].num_timesteps - self.timestamp > self.algo_config["validate_every_timesteps"]:
+            self.validate()
+            self.timestamp = locals["self"].num_timesteps
+
+        if self.save_model_flag == True:
+            self.save_model_flag = False
+            locals["self"].save(self.video_folder+"best_model.pkl")
+        if self.ep_infos is not None:
+            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ep_len', simple_value=locals["self"].num_timesteps)])
+            locals['writer'].add_summary(summary, locals["self"].num_timesteps)
+            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/pose_rew', simple_value=locals["self"].num_timesteps )])
+            locals['writer'].add_summary(summary, self.timestamp)
+            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ball_rew', simple_value=locals["self"].num_timesteps )])
+            locals['writer'].add_summary(summary, self.timestamp)
+            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/curriculum', simple_value=locals["self"].num_timesteps )])
+            locals['writer'].add_summary(summary, self.timestamp)   
+
+    def learn(self):
+        self.model.learn(total_timesteps=self.algo_config["total_timesteps"],log_interval=1000,tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
+
+
+
+    def validate(self):
+        obs = self.env.reset()
+        obs = self.env.reset()
+        rew = []
+        pose_rew = []
+        ball_rew = []
+        l = []
+        for i in range(5000):
+            action, _states = self.model.predict(obs)
+            obs, rewards, dones, info = self.env.step(action)
+            if dones == True:
+                rew.append(info["episode"]["r"])
+                obs = self.env.reset()
+                pose_rew.append(info["episode"]["pose_rew"])
+                ball_rew.append(info["episode"]["ball_rew"])
+                l.append(info["episode"]["l"])
+                cur_step = info["episode"]["curriculum_step"]
+        rew = sum(rew)/len(rew)
+        self.ep_infos = {}
+        self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
+        self.ep_infos["pose_rew"] = sum(pose_rew)/len(pose_rew)
+        self.ep_infos["l"] = sum(l)/len(l)
+        self.ep_infos["cur_step"] = cur_step
+
+        if rew > self.best_mean_reward:
+                self.best_mean_reward = rew
+                self.save_model_flag = True
+
+        return rew
 
 class c_DDPG(c_class):
 

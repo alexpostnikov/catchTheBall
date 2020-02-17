@@ -4,7 +4,7 @@
   ent_coef: 0.01
   #gamma: (float) Discount factor
   total_timesteps: 3000000
-
+  validate_every_timesteps: 10000
   gamma: 0.9
   n_steps: 1024
   nn_size: 256

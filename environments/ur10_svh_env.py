@@ -67,6 +67,8 @@ class ur10svh(ur10SvhBase):
             self.robot_visual = vis.create_graphical_object(
                 self.ball, name="ball")
         self.reward_buff__ = collections.deque(maxlen=10)
+        self.ball_reward_buf = []
+        self.pose_reward_buf = []
 
     def init_ora(self):  # ora -> observation reward actions
 
@@ -150,9 +152,6 @@ class ur10svh(ur10SvhBase):
         self.p_target12 *= self.action_std
         self.p_target12 += self.action_mean
         self.p_targets = applayMimic(self.p_target12)
-        #self.p_targets[-self.num_joints:] = self.p_target12
-
-        # set actions
         self.robot.set_pd_targets(self.p_targets, self.v_targets)
 
         loop_count = int(self.control_dt / self.simulation_dt + 1.e-10)
@@ -212,6 +211,8 @@ class ur10svh(ur10SvhBase):
         return self.ob_scaled
 
     def reset(self):
+        self.ball_reward_buf = []
+        self.pose_reward_buf = []
 
         self.robot.set_states(self.gc_init, self.gv_init)
         self.robot.set_generalized_coordinates(self.gc_init)
@@ -250,7 +251,6 @@ class ur10svh(ur10SvhBase):
         if (self.step_number >= self.max_step) or (self.getBallPose()[2] < 0.5):
             self.terminal_counter += 1
             self.done = True
-
             if self.visualizable:
                 self.visualizable = False
                 vis = raisim.OgreVis.get()
@@ -268,21 +268,25 @@ class ur10svh(ur10SvhBase):
         self.extra_info["cur_step"] = {
             "r": self.total_reward, "l": self.step_number}
         if (self.done):
-            self.extra_info["episode"] = {"final_dist": self.pose_reward, "l": self.step_number, "curriculum_step": self.curriculum_step, "r":self.total_reward, "l":self.step_number}
+            self.extra_info["episode"] = {"pose_rew": sum(self.pose_reward_buf)/len(self.pose_reward_buf), "ball_rew":sum(self.ball_reward_buf)/len(self.ball_reward_buf), "curriculum_step": self.curriculum_step, "r":self.total_reward, "l":self.step_number}
         
 
         return self.extra_info
 
     def update_reward(self):
 
-        self.pose_reward = np.exp(
+        self.ball_reward = np.exp(
             (- 2 * np.linalg.norm(self.obsEndef - self.ballPose)))
+        self.ball_reward_buf.append(self.ball_reward)
 
-        self.total_reward = self.pose_reward
+        self.pose_reward = np.exp(
+            (- 2 * np.linalg.norm(self.obsEndef - np.array([0.2,0.2,2.7]))))
+        self.pose_reward_buf.append(self.pose_reward)
+
+        self.total_reward = self.pose_reward * self.ball_reward
 
         if self.done:
-            # self.total_reward += 5 * np.linalg.norm(self.obsEndef - self.goalPose)
-            # self.total_reward += self.terminal_reward_coeff
+
             self.reward_buff__.append(self.pose_reward) 
             self.update_curriculum_status()
 
@@ -309,3 +313,4 @@ class ur10svh(ur10SvhBase):
             if self.curriculum_step > self.config["environment"]["curruclum"]["curruclum_step_max"]:
                 self.curriculum_step += 1
         return
+

@@ -24,9 +24,9 @@ cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 config = load_yaml(cur_dir+"/environments/ur10_cfg.yaml")
 
 if __name__ == "__main__":
-    
+
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--model_path', type=str, default="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/stableBaselines/ur10_svh/video/PPO_4/best_model.pkl",
+    parser.add_argument('--model_path', type=str, default="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/stableBaselines/ur10_svh/log/TRPO_2/best_model.pkl",
                     help='algo type, extect one of: PPO, TRPO, DDPG or TD3')
     
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
                     resource_directory="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/iskander/schunk_gym/rsc/ur10/",video_folder="./video/TRPO/")  # gym.make('CartPole-v1')
 
     #model_path = "/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/stableBaselines/ur10_svh/video/PPO_4/best_model.pkl"
-    model = PPO2.load(model_path)
+    model = TRPO.load(model_path)
 
     # Optional: PPO2 requires a vectorized environment to run
     # the env is now wrapped automatically when passing it to the constructor

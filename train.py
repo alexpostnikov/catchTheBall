@@ -41,7 +41,7 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder):
     c_model = c_models[ALGO]()
     algo_config = load_yaml(algo_config_path)
     shutil.copy2(algo_config_path, video_folder)
-    c_model.model.learn(total_timesteps=algo_config["total_timesteps"],tb_log_name="",callback=c_model.learning_callback) # 1 6000 000 ~1hr
+    c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
     c_model.validate()
     
