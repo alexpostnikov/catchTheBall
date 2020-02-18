@@ -2,7 +2,10 @@
 
 import os
 import sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+try:
+    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+except:
+    pass
 import gym
 from environments.ur10_svh_env import ur10svh
 
@@ -21,11 +24,19 @@ import tensorflow as tf
 from multiprocessing import Process
 import shutil
 
+algos = \
+{ 
+    "PPO"  : PPO2,
+    "TRPO" : TRPO,
+    "DDPG" : DDPG,
+    "TD3"  : TD3
+
+}
 
 
+def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
+    print ("ALGO ", ALGO)
 
-def run_learning(ALGO, env_config_path, algo_config_path,video_folder):
-    
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     env = ur10svh(cur_dir+env_config_path,
                     resource_directory="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/iskander/schunk_gym/rsc/ur10/",video_folder=video_folder)  # gym.make('CartPole-v1')
@@ -37,13 +48,17 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder):
         "DDPG" : c_DDPG(algo_config_path, env, video_folder),
         "TD3"  : c_TD3 (algo_config_path, env, video_folder)
     }
-
+    
     c_model = c_models[ALGO]()
+    
     algo_config = load_yaml(algo_config_path)
+    if weight is not None:
+        c_model.model = algos[ALGO].load(weight, c_model.env)
+        c_model.model.tensorboard_log = video_folder
     shutil.copy2(algo_config_path, video_folder)
     c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
-    c_model.validate()
+    # c_model.validate()
     
 
 
@@ -67,15 +82,16 @@ if __name__ == "__main__":
     env_config_path = jobs_config["env_config_path"]
 
     cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))    
-    
-    
+
+
     processes = []
     for i in range(0,jobs_config["num_jobs"]):
         ALGO = jobs_config["jobs"][i]["algo"]
+        weight = jobs_config["jobs"][i]["weight"]
         algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
         video_folder = check_video_folder(cur_dir+"/log/"+ALGO)
         video_folder = video_folder+"/"
-        p = Process(target=run_learning, args=(ALGO,env_config_path,algo_config_path, video_folder))
+        p = Process(target=run_learning, args=(ALGO,env_config_path,algo_config_path, video_folder, weight))
         processes.append(p)
         p.start()
     
@@ -83,4 +99,3 @@ if __name__ == "__main__":
         p.join()
 
     print ("done")
-        

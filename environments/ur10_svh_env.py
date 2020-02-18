@@ -31,6 +31,7 @@ class ur10svh(ur10SvhBase):
         self.ob_dim = 6  # convention described on top
         self.action_dim = self.num_joints
         self.init_ora()
+        self.curriculum_step = self.config["environment"]["curruclum"]["curruclum_step_init"]
 
         raisim.gui.reward_logger.init(
             ["obsEndef[0]", "obsEndef[1]", "obsEndef[2]"])
@@ -66,7 +67,7 @@ class ur10svh(ur10SvhBase):
         if self.visualizable:
             self.robot_visual = vis.create_graphical_object(
                 self.ball, name="ball")
-        self.reward_buff__ = collections.deque(maxlen=10)
+        self.reward_buff__ = collections.deque(maxlen=20)
         self.ball_reward_buf = []
         self.pose_reward_buf = []
 
@@ -74,13 +75,12 @@ class ur10svh(ur10SvhBase):
 
         self.action_mean = self.gc_init[-self.num_joints:]
         self.action_mean = np.array([*np.ones(6)*0.0,
-                                     *np.ones(20)*0.5])
-        self.action_std = 3.14*2 * np.ones(self.action_dim)
+                                     *np.ones(20)*0.6])
 
         self.action_std = np.array([*np.ones(6)*3.14*2,
-                                    *np.ones(20)*0.7])
+                                    *np.ones(20)*0.8])
 
-        self.ob_mean = np.array([0.0, 0.0, 1.0,  # gc
+        self.ob_mean = np.array([0.0, 0.0, 2.0,  # gc
                                  0, 0, 2,  # goal
                                  ], dtype=np.float32)
         self.ob_std = np.array([*np.ones(3)*2.0,  # gc
@@ -88,7 +88,7 @@ class ur10svh(ur10SvhBase):
                                 ], dtype=np.float32)
 
         self.action_space = spaces.Box(-1., 1., shape=[self.action_dim])
-        self.observation_space = spaces.Box(low=-10, high=10,
+        self.observation_space = spaces.Box(low= -2, high= 2,
                                             shape=[self.ob_dim])
 
         self.total_reward = 0.
@@ -114,7 +114,7 @@ class ur10svh(ur10SvhBase):
         self.p_targets, self.v_targets = np.zeros(
             self.gc_dim), np.zeros(self.gv_dim)
         self.p_target12 = np.zeros(self.num_joints)
-        self.gc_init = np.ones(self.gc_dim)*0.01
+        self.gc_init = np.ones(self.gc_dim)*0.1
         self.gc_init[0:6] = np.array([0, -1, 1.5, 1, 0., 3.14])
 
         self.joint_p_gains = np.array([2000., 2000., 2000., 300., 100., 10.,  600, 600, 600,
@@ -276,11 +276,11 @@ class ur10svh(ur10SvhBase):
     def update_reward(self):
 
         self.ball_reward = np.exp(
-            (- 2 * np.linalg.norm(self.obsEndef - self.ballPose)))
+            (- 4 * np.linalg.norm(self.obsEndef - self.ballPose)))
         self.ball_reward_buf.append(self.ball_reward)
 
         self.pose_reward = np.exp(
-            (- 2 * np.linalg.norm(self.obsEndef - np.array([0.2,0.2,2.7]))))
+            (- 4 * np.linalg.norm(self.obsEndef - np.array([0.2,0.2,2.7]))))
         self.pose_reward_buf.append(self.pose_reward)
 
         self.total_reward = self.pose_reward * self.ball_reward
@@ -308,9 +308,12 @@ class ur10svh(ur10SvhBase):
         return
 
     def update_curriculum_status(self):
-        
-        if len(self.reward_buff__) > 5 and (sum(self.reward_buff__)/len(self.reward_buff__)) > 0.8:
-            if self.curriculum_step > self.config["environment"]["curruclum"]["curruclum_step_max"]:
-                self.curriculum_step += 1
+        try:
+            if len(self.reward_buff__) > 10 and (sum(self.reward_buff__)/len(self.reward_buff__)) > 0.7:
+                if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
+                    self.curriculum_step += 1
+                    self.reward_buff__.clear()
+        except ZeroDivisionError: 
+            pass
         return
 

@@ -26,7 +26,7 @@ config = load_yaml(cur_dir+"/environments/ur10_cfg.yaml")
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--model_path', type=str, default="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/stableBaselines/ur10_svh/log/TRPO_2/best_model.pkl",
+    parser.add_argument('--model_path', type=str, default="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/stableBaselines/ur10_svh/log/best_model.pkl",
                     help='algo type, extect one of: PPO, TRPO, DDPG or TD3')
     
 
