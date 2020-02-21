@@ -6,8 +6,8 @@ try:
     sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 except:
     pass
-import gym
-from environments.ur10_svh_env import ur10svh
+
+from environments.ur10_svh_env_simpl import ur10svh
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
@@ -20,7 +20,7 @@ from stable_baselines.td3.policies import  MlpPolicy as tf3MlpPolicy
 import argparse
 from algos import c_DDPG, c_PPO, c_TD3, c_TRPO
 import tensorflow as tf
-
+import gym
 from multiprocessing import Process
 import shutil
 
@@ -39,7 +39,7 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     env = ur10svh(cur_dir+env_config_path,
-                    resource_directory="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/iskander/schunk_gym/rsc/ur10/",video_folder=video_folder)  # gym.make('CartPole-v1')
+                    resource_directory=cur_dir+"/rsc/ur10/",video_folder=video_folder)  # gym.make('CartPole-v1')
     # env_cofig = load_yaml(cur_dir+env_config_path)
     c_models = \
     {
@@ -52,7 +52,7 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
     c_model = c_models[ALGO]()
     
     algo_config = load_yaml(algo_config_path)
-    if weight is not None:
+    if (str(weight) != "None"):
         c_model.model = algos[ALGO].load(weight, c_model.env)
         c_model.model.tensorboard_log = video_folder
     shutil.copy2(algo_config_path, video_folder)

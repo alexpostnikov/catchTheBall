@@ -1,10 +1,14 @@
   num_jobs: 1
   env_config_path: /environments/ur10_cfg.yaml
-  jobs: [ 
-          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg.yaml ,weight: /media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/stableBaselines/ur10_svh/weights/TRPO_3/best_model.pkl},
-          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg1.yaml,weight: None},
-          {algo: PPO, algo_config_path: ./environments/ppo_cfg1.yaml  ,weight: None},
-          {algo: DDPG, algo_config_path: ./environments/ppo_cfg.yaml  ,weight: None},
-          {algo: PPO, algo_config_path: ./environments/ppo_cfg.yaml,   weight: None},
-          {algo: TD3, algo_config_path: ./environments/ppo_cfg.yaml   ,weight: None}
+  jobs: [
+
+          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg.yaml ,weight:  None},
+          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg1.yaml,weight:  None},
+          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg2.yaml ,weight: None},
+          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg3.yaml,weight:  None},
+          {algo: TRPO, algo_config_path: ./environments/TRPO_cfg4.yaml,weight:  None},
+          {algo: DDPG, algo_config_path: ./environments/ppo_cfg.yaml  ,weight:  None},
+          {algo: PPO, algo_config_path: ./environments/ppo_cfg1.yaml  ,weight:  None},
+          {algo: PPO, algo_config_path: ./environments/ppo_cfg.yaml,   weight:  None},
+          {algo: TD3, algo_config_path: ./environments/ppo_cfg.yaml   ,weight:  None}
         ]

@@ -1,0 +1,57 @@
+seed: 2
+record_video: yes
+
+environment:
+  render: yes
+  num_envs: 100
+  num_threads: 40
+  simulation_dt: 0.0025
+  control_dt: 0.01
+  max_time: 8.0
+  learning_rate: 1e-4
+  nminibatches: 10
+  noptepochs: 10
+  total_timesteps: 1000000000000
+  eval_every_n: 10
+
+  targetJointOnHand: 15
+  actionScaler: 3.14
+  lowBallSpeedRand:
+    - -0.003
+    - -0.003
+    - -0.005
+    - 0.0005
+    - 0.0005
+    - 0.0005
+
+  ballSpawnCoordRand:
+    - -0.005
+    - -0.005
+    - 3
+    - 0.005
+    - 0.005
+    - 10
+
+  ballSpawnSpeedRand:
+    - -3
+    - -3
+    - 0
+    - 3
+    - 3
+    - 3
+
+  minBallHeight: 0.15
+
+  randParallelShift:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+
+  forceRewardCoeff: 0.5
+  # 0 - random velocity and position, fixed goal
+  # 1 - ball spawns in the hand
+  # 2 - random height over the hand 
+  curriculum: 0

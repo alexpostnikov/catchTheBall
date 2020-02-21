@@ -3,10 +3,8 @@ from gym import spaces
 import yaml
 import numpy as np
 import raisimpy as raisim
-from raisimpy_gym.envs.anymal import ANYMAL_RESOURCE_DIRECTORY
-from raisimpy_gym.envs.raisim_gym_env import RaisimGymEnv, keyboard_interrupt
-from raisimpy_gym.envs import reward_logger
-from raisimpy_gym.envs.vis_setup_callback import setup_callback
+
+
 from datetime import datetime
 
 

@@ -5,13 +5,53 @@ from gym import spaces
 import yaml
 import numpy as np
 import raisimpy as raisim
-from raisimpy_gym.envs.anymal import ANYMAL_RESOURCE_DIRECTORY
-from raisimpy_gym.envs.raisim_gym_env import RaisimGymEnv, keyboard_interrupt
-from raisimpy_gym.envs import reward_logger
-from raisimpy_gym.envs.vis_setup_callback import setup_callback
+
+
+
+# from raisimpy_gym.envs.vis_setup_callback import setup_callback
 from datetime import datetime
 from .ur10_svh_utils import load_yaml
 import os
+
+
+'''
+
+'''
+
+import numpy as np
+import raisimpy as raisim
+
+def normalize(array):
+    return np.asarray(array) / np.linalg.norm(array)
+
+
+def setup_callback():
+    vis = raisim.OgreVis.get()
+
+    # light
+    light = vis.get_light()
+    light.set_diffuse_color(1, 1, 1)
+    light.set_cast_shadows(True)
+    light.set_direction(normalize([-3., -3., -0.5]))
+    vis.set_camera_speed(300)
+
+    # load textures
+    vis.add_resource_directory(vis.get_resource_dir() + "/material/checkerboard")
+    vis.load_material("checkerboard.material")
+
+    # shadow setting
+    manager = vis.get_scene_manager()
+    manager.set_shadow_technique(raisim.ogre.ShadowTechnique.SHADOWTYPE_TEXTURE_ADDITIVE)
+    manager.set_shadow_texture_settings(2048, 3)
+
+    # scale related settings!! Please adapt it depending on your map size
+    # beyond this distance, shadow disappears
+    manager.set_shadow_far_distance(3)
+    # size of contact points and contact forces
+    vis.set_contact_visual_object_size(0.03, 0.2)
+    # speed of camera motion in freelook mode
+    vis.get_camera_man().set_top_speed(5)
+
 
 
 
