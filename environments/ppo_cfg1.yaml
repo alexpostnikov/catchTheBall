@@ -9,7 +9,7 @@
   gamma: 0.9
   n_steps: 1024
   nn_size: 256
-  learning_rate: 2.5e-4
+  learning_rate: 1e-4
 
   #vf_coef: (float) Value function coefficient for the loss calculation
   vf_coef: 0.5

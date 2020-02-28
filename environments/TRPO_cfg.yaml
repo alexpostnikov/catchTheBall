@@ -3,12 +3,12 @@
   ent_coef: 0.00
   #gamma: (float) Discount factor
   total_timesteps: 300000000
-  validate_every_timesteps: 30000
+  validate_every_timesteps: 10000
   gamma: 0.99
   timesteps_per_batch: 1024
   nn_size: 256
   learning_rate: 2.5e-4
-  verbose: 0
+  verbose: 1
 
   #vf_coef: (float) Value function coefficient for the loss calculation
   vf_coef: 0.5
@@ -17,4 +17,4 @@
   max_grad_norm: 0.5
 
   #am: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator
-  lam: 0.95
+  lam: 0.98

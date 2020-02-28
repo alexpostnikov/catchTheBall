@@ -99,12 +99,26 @@ def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid='gaussian',
     raise ValueError('`margin` must be non-negative.')
 
   in_bounds = np.logical_and(lower <= x, x <= upper)
-  print(in_bounds)
+
   if margin == 0:
     value = np.where(in_bounds, 1.0, 0.0)
   else:
     d = np.where(x < lower, lower - x, x - upper) / margin
-    print(d," ",value_at_margin, " ",sigmoid)
+
     value = np.where(in_bounds, 1.0, _sigmoids(d, value_at_margin, sigmoid))
 
   return float(value) if np.isscalar(x) else value
+
+if __name__ == "__main__":
+  import matplotlib.pyplot as plt
+
+  x = np.linspace(0,2,200)
+  plt.plot(x,tolerance(x,(0,0.01), 0.5))
+  plt.show()
+  # print(tolerance(0.3,(0,0.1),0.3))
+  #
+  # print(tolerance(0.3,(0,0.2),0.3))
+  #
+  # print(tolerance(0.3,(0,0.),0.3))
+  #
+  # print(tolerance(0.3,(0,0.1),0.3))

@@ -1,4 +1,3 @@
-#! /home/robot/venvs/raisimGymEnv/bin/python3.6
 
 import os
 import sys
@@ -7,7 +6,7 @@ try:
 except:
     pass
 
-from environments.ur10_svh_env_simpl import ur10svh
+from environments.ur10_svh_env import ur10svh
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
@@ -33,7 +32,7 @@ algos = \
 
 }
 
-
+cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
     print ("ALGO ", ALGO)
 
@@ -48,6 +47,14 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
         "DDPG" : c_DDPG(algo_config_path, env, video_folder),
         "TD3"  : c_TD3 (algo_config_path, env, video_folder)
     }
+
+    runner =\
+    {
+        "PPO":  cur_dir+"/test_ppo2.py",
+        "TRPO": cur_dir+"/test_trpo.py",
+        "DDPG": cur_dir+"/test_ddpg.py",
+        "TD3":  cur_dir+"/test_TD3.py"
+    }
     
     c_model = c_models[ALGO]()
     
@@ -56,23 +63,16 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
         c_model.model = algos[ALGO].load(weight, c_model.env)
         c_model.model.tensorboard_log = video_folder
     shutil.copy2(algo_config_path, video_folder)
+    shutil.copy2(cur_dir + env_config_path, video_folder)
+    shutil.copy2(runner[ALGO], video_folder)
     c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
     # c_model.validate()
-    
 
 
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Process some integers.')
-    # parser.add_argument('--algo', type=str, default="PPO",
-    #                 help='algo type, extect one of: PPO, TRPO, DDPG or TD3')
-    
-    # parser.add_argument('--env_config_path', type=str, default="/environments/ur10_cfg.yaml",
-    #                 help='path to config file')
-
-    # parser.add_argument('--algo_config_path', type=str, default="./environments/ppo_cfg.yaml",
-    #                 help='path to config file')
 
     parser.add_argument('--jobs_config_path', type=str, default="./environments/jobs_cfg.yaml",
                     help='path to config file')
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
 
     processes = []
-    for i in range(0,jobs_config["num_jobs"]):
+    for i in range(0, jobs_config["num_jobs"]):
         ALGO = jobs_config["jobs"][i]["algo"]
         weight = jobs_config["jobs"][i]["weight"]
         algo_config_path = jobs_config["jobs"][i]["algo_config_path"]

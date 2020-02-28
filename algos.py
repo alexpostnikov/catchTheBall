@@ -31,7 +31,7 @@ class c_class():
         pose_rew = []
         ball_rew = []
         l = []
-        r=[]
+        r =[]
         for i in range(5000):
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
@@ -71,7 +71,11 @@ class c_class():
 
         if self.save_model_flag == True:
             self.save_model_flag = False
-            locals["self"].save(self.video_folder+"best_model.pkl")
+            try:
+                locals["self"].save(self.video_folder+"best_model.pkl")
+            except:
+                pass
+            locals["self"].save(self.video_folder + "current_model.pkl")
         if self.ep_infos is not None:
             summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ep_len', simple_value = self.ep_infos["l"] )])
             locals['writer'].add_summary(summary, locals["self"].num_timesteps)
@@ -120,6 +124,8 @@ class c_PPO(c_class):
         pose_rew = []
         ball_rew = []
         l = []
+        r= []
+        cur_step = 0
         for i in range(5000):
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
@@ -129,18 +135,41 @@ class c_PPO(c_class):
                 is_done = dones
             
             if is_done:
-                rew.append(info["episode"]["r"])
-                obs = self.env.reset()
-                pose_rew.append(info["episode"]["pose_rew"])
-                ball_rew.append(info["episode"]["ball_rew"])
-                l.append(info["episode"]["l"])
-                cur_step = info["episode"]["curriculum_step"]
+                if self.algo_config["num_envs"] == 1:
+                    rew.append(info["episode"]["r"])
+                    obs = self.env.reset()
+                    pose_rew.append(info["episode"]["pose_rew"])
+                    ball_rew.append(info["episode"]["ball_rew"])
+                    l.append(info["episode"]["l"])
+                    cur_step = info["episode"]["curriculum_step"]
+                if self.algo_config["num_envs"] > 1:
+                    info = info[np.where(dones==True)[0][0]]
+                    rew.append(info["episode"]["r"])
+                    obs = self.env.reset()
+                    pose_rew.append(info["episode"]["pose_rew"])
+                    ball_rew.append(info["episode"]["ball_rew"])
+                    l.append(info["episode"]["l"])
+                    r.append(info["episode"]["r"])
+                    cur_step = info["episode"]["curriculum_step"]
+
         rew = sum(rew)/len(rew)
+        if rew > 0.7:
+            if isinstance(self.env, DummyVecEnv):
+                for env in self.env.envs:
+                    env.update_cur = True
+            else:
+                self.env.update_cur = True
         rew = rew * (cur_step + 1)  ### next curriculum -> better model apriory?
+
+
         self.ep_infos = {}
         self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
         self.ep_infos["pose_rew"] = sum(pose_rew)/len(pose_rew)
         self.ep_infos["l"] = sum(l)/len(l)
+        try:
+            self.ep_infos["r"] = sum(r) / len(r)
+        except ZeroDivisionError:
+            self.ep_infos["r"] = 0
         self.ep_infos["curriculum_step"] = cur_step
 
         if rew > self.best_mean_reward:
@@ -148,7 +177,6 @@ class c_PPO(c_class):
                 self.save_model_flag = True
 
         return rew
-
 
 
 class c_TRPO(c_class):
@@ -191,7 +219,6 @@ class c_DDPG(c_class):
     #         locals["self"].save(self.video_folder+"best_model.pkl")
 
 class c_TD3(c_class):
-
     def __init__(self,config, env, video_folder):
         super(c_TD3, self).__init__()
         self.algo_config = load_yaml(config)
