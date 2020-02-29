@@ -1,6 +1,8 @@
 import numpy as np
 import raisimpy as raisim
 
+from math import *
+import cmath
 
 INIT_POSES =\
 [
@@ -108,3 +110,78 @@ class Robot:
         self.robot.set_states(self.gc_init, self.gv_init)
         self.robot.set_generalized_coordinates(self.gc_init)
         return
+
+
+def HTM(i, theta):
+    """Calculate the HTM between two links.
+    Args:
+        i: A target index of joint value.
+        theta: A list of joint value solution. (unit: radian)
+    Returns:
+        An HTM of Link l w.r.t. Link l-1, where l = i + 1.
+
+    """
+    # d (unit: mm)
+    d1 = 0.1273
+    d2 = d3 = 0
+    d4 = 0.163941
+    d5 = 0.1157
+    d6 = 0.0922
+
+    # a (unit: mm)
+    a1 = a4 = a5 = a6 = 0
+    a2 = -0.612
+    a3 = -0.5723
+
+    # List type of D-H parameter
+    # Do not remove these
+    d = np.array([d1, d2, d3, d4, d5, d6])  # unit: mm
+    a = np.array([a1, a2, a3, a4, a5, a6])  # unit: mm
+    alpha = np.array([pi / 2, 0, 0, pi / 2, -pi / 2, 0])  # unit: radian
+
+    Rot_z = np.matrix(np.identity(4))
+    Rot_z[0, 0] = Rot_z[1, 1] = cos(theta[i])
+    Rot_z[0, 1] = -sin(theta[i])
+    Rot_z[1, 0] = sin(theta[i])
+
+    Trans_z = np.matrix(np.identity(4))
+    Trans_z[2, 3] = d[i]
+
+    Trans_x = np.matrix(np.identity(4))
+    Trans_x[0, 3] = a[i]
+
+    Rot_x = np.matrix(np.identity(4))
+    Rot_x[1, 1] = Rot_x[2, 2] = cos(alpha[i])
+    Rot_x[1, 2] = -sin(alpha[i])
+    Rot_x[2, 1] = sin(alpha[i])
+
+    A_i = Rot_z * Trans_z * Trans_x * Rot_x
+
+    return A_i
+
+
+# Forward Kinematics
+
+def fwd_kin(theta, i_unit='r', o_unit='n'):
+    """Solve the HTM based on a list of joint values.
+    Args:
+        theta: A list of joint values. (unit: radian)
+        i_unit: Output format. 'r' for radian; 'd' for degree.
+        o_unit: Output format. 'n' for np.array; 'p' for ROS Pose.
+    Returns:
+        The HTM of end-effector joint w.r.t. base joint
+    """
+
+    T_06 = np.matrix(np.identity(4))
+
+    if i_unit == 'd':
+        theta = [radians(i) for i in theta]
+
+    for i in range(6):
+        T_06 *= HTM(i, theta)
+
+    return T_06
+
+
+def get_endef_position_by_joint(theta):
+    return (fwd_kin(theta)[0:3, 3].T)

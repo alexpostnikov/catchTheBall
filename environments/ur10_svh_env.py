@@ -12,7 +12,7 @@ from datetime import datetime
 from .ur10_svh_env_base import ur10SvhBase
 from .ur10_svh_utils import applayMimic
 from .Ball import Ball
-from .robot import Robot
+from .robot import Robot, get_endef_position_by_joint
 import math
 
 
@@ -32,19 +32,22 @@ class ur10svh(ur10SvhBase):
 
         self.desired_fps = 30.
         self.robot = Robot(self.world, raisim.OgreVis.get(), self.visualizable, self.config, resource_directory)
-        self.robot.reset()
         self.goal_pose = self.robot.endef_pose + np.array([-0.2, 0., 0.])
+        self.ball = Ball(self.world, raisim.OgreVis.get(), self.visualizable, self.config)
+        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.05, 0.0, 0.05]))
+        self.robot.reset()
+
 
         if self.visualizable:
             # self.init_vis()
             self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
             self.vis.add_visual_object("init_pose", "sphereMesh", "white", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("goal_pose", "sphereMesh", "green", [0.02, 0.02, 0.02])
+            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.02, 0.02, 0.02])
 
         self.obsEndef = self.robot.get_endef_pose()
         self.initial_pose = self.robot.get_endef_pose()
-        self.ball = Ball(self.world, raisim.OgreVis.get(), self.visualizable, self.config)
-        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.05, 0.0, 0.05]))
+        self.p_targets = np.zeros(self.action_dim)
 
 
 
@@ -74,14 +77,16 @@ class ur10svh(ur10SvhBase):
                 skip_counter += 1
 
         p_targets = applayMimic(self.p_target12)
-        p_targets = self.robot.transformAction(p_targets)
-
+        self.p_targets = self.robot.transformAction(p_targets)
+        # self.robot.robot.set_generalized_coordinates(p_targets)
         self.robot.robot.set_pd_targets(p_targets, 0 * p_targets)
-
+        ee_goal = get_endef_position_by_joint (p_targets[0:6])
+        if self.visualizable:
+            visual_objects = self.vis.get_visual_object_list()
+            visual_objects["ee_goal"].pos_offset = [-ee_goal[0, 0], -ee_goal[0, 1], ee_goal[0, 2] + 0.30]
         loop_count = int(self.control_dt / self.simulation_dt + 1.e-10)
         vis_decimation = int(
             1. / (self.desired_fps * self.simulation_dt) + 1.e-10)
-
         # update world
         for _ in range(loop_count):
             self.world.integrate()
@@ -185,7 +190,7 @@ class ur10svh(ur10SvhBase):
 
     def is_terminal_state(self):
         self.done = False
-        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.8):
+        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.6):
             self.terminal_counter += 1
             self.done = True
             if self.visualizable:
@@ -235,7 +240,7 @@ class ur10svh(ur10SvhBase):
         # print (" pose r: ", pose_reward, " ball_reward: ", ball_reward)
         self.pose_reward_buf.append(pose_reward)
         self.ball_reward_buf.append(ball_reward)
-        self.total_reward = ball_reward * pose_reward
+        self.total_reward = pose_reward * ball_reward
 
         if self.done:
             self.reward_buff__.append(self.total_reward)

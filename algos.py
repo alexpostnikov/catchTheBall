@@ -75,7 +75,7 @@ class c_class():
                 locals["self"].save(self.video_folder+"best_model.pkl")
             except:
                 pass
-            locals["self"].save(self.video_folder + "current_model.pkl")
+        locals["self"].save(self.video_folder + "current_model.pkl")
         if self.ep_infos is not None:
             summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ep_len', simple_value = self.ep_infos["l"] )])
             locals['writer'].add_summary(summary, locals["self"].num_timesteps)

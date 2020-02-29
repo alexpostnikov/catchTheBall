@@ -60,8 +60,12 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
     
     algo_config = load_yaml(algo_config_path)
     if (str(weight) != "None"):
+        print ("Contnuing learning from ", str(weight) )
         c_model.model = algos[ALGO].load(weight, c_model.env)
         c_model.model.tensorboard_log = video_folder
+    else:
+        print ("learning from scratch")
+
     shutil.copy2(algo_config_path, video_folder)
     shutil.copy2(cur_dir + env_config_path, video_folder)
     shutil.copy2(runner[ALGO], video_folder)
