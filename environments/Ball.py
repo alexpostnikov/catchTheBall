@@ -5,7 +5,7 @@ class Ball:
     def __init__(self, world, vis, visualizable, config):
         self.ball = world.add_sphere(radius=0.025, mass=0.1)
         # self.ballPose_init = [0.423301, 0.194859, 1.76 - 0.2]
-        self.ballPose_init = np.array([0.183301, 0.154859, 1.76])
+        self.ballPose_init = np.array([0.383301, 0.154859, 1.76])
         self.ball.set_position(self.ballPose_init)
         self.ballPose = self.ballPose_init
         self.disp = [0, 0, 0]
@@ -15,12 +15,10 @@ class Ball:
                 self.ball, name="ball")
 
     def reset(self, curriculum_step=0):
-
         if self.config["environment"]["curruclum"]["use_curruclum"]:
             self.disp = np.array(
                 self.config["environment"]["curruclum"]["ball_pose_distrib"][curriculum_step])
             self.disp = self.disp * (np.random.rand(3) - np.array([0.5, 0.5, 0.5]))
-
         self.ballPose = self.ballPose_init + self.disp
         self.ball.set_position(self.ballPose)
         self.ball.set_velocity(

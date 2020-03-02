@@ -10,8 +10,7 @@ from datetime import datetime
 
 
 def applayMimic( ptarget, gc_dim=26, schunk_joint_offset = 6):
-    
-    # joint_indexes -= schunk_joint_offset
+
 
     for joint in range(schunk_joint_offset, gc_dim):
         if joint == 0+schunk_joint_offset: 

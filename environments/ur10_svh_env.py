@@ -32,10 +32,16 @@ class ur10svh(ur10SvhBase):
 
         self.desired_fps = 30.
         self.robot = Robot(self.world, raisim.OgreVis.get(), self.visualizable, self.config, resource_directory)
-        self.goal_pose = self.robot.endef_pose + np.array([-0.2, 0., 0.])
+        self.robot.robot_to_init_pose()
+        self.goal_pose_init = self.robot.endef_pose
+        self.goal_pose = np.array(self.goal_pose_init)
         self.ball = Ball(self.world, raisim.OgreVis.get(), self.visualizable, self.config)
+        self.ball.ballPose_init[0] = self.goal_pose_init[0] + 0.25
+        self.ball.ballPose_init[1] = self.goal_pose_init[1]
+        self.ball.ballPose_init[2] = 1.4  # self.goal_pose_init[2]
         self.ball.set_init_pose(self.robot.endef_pose + np.array([0.05, 0.0, 0.05]))
         self.robot.reset()
+        self.ball.reset()
 
 
         if self.visualizable:
@@ -46,14 +52,13 @@ class ur10svh(ur10SvhBase):
             self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.02, 0.02, 0.02])
 
         self.obsEndef = self.robot.get_endef_pose()
-        self.initial_pose = self.robot.get_endef_pose()
+
         self.p_targets = np.zeros(self.action_dim)
+        self.reset()
 
 
 
     def init_ora(self):  # ora -> observation reward actions
-
-
 
         self.action_space = spaces.Box(-1., 1., shape=[self.action_dim])
 
@@ -80,7 +85,7 @@ class ur10svh(ur10SvhBase):
         self.p_targets = self.robot.transformAction(p_targets)
         # self.robot.robot.set_generalized_coordinates(p_targets)
         self.robot.robot.set_pd_targets(p_targets, 0 * p_targets)
-        ee_goal = get_endef_position_by_joint (p_targets[0:6])
+        ee_goal = get_endef_position_by_joint(p_targets[0:6])
         if self.visualizable:
             visual_objects = self.vis.get_visual_object_list()
             visual_objects["ee_goal"].pos_offset = [-ee_goal[0, 0], -ee_goal[0, 1], ee_goal[0, 2] + 0.30]
@@ -117,6 +122,7 @@ class ur10svh(ur10SvhBase):
         return np.asarray(self.ob_scaled), self.total_reward, self.done, self.extra_info
 
     def update_observation(self):
+
         self.gc, self.gv = self.robot.get_states()
         self.ob_double, self.ob_scaled = np.zeros(
             self.ob_dim), np.zeros(self.ob_dim)
@@ -144,9 +150,15 @@ class ur10svh(ur10SvhBase):
 
         self.step_number = 0
         self.update_observation()
+
+        if self.curriculum_step == 0:
+
+            self.ball.ballPose_init[0] = self.goal_pose_init[0]+0.25
+            self.ball.ballPose_init[1] = self.goal_pose_init[1]
+            self.ball.ballPose_init[2] = 1.4#self.goal_pose_init[2]
+
         if self.visualizable:
             l = self.vis.get_visual_object_list()
-
             l["init_pose"].pos_offset = self.ball.ballPose_init
             l["goal_pose"].pos_offset = self.goal_pose
         return self.ob_scaled
@@ -190,7 +202,7 @@ class ur10svh(ur10SvhBase):
 
     def is_terminal_state(self):
         self.done = False
-        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.6):
+        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.4):
             self.terminal_counter += 1
             self.done = True
             if self.visualizable:
@@ -230,6 +242,7 @@ class ur10svh(ur10SvhBase):
 
     def update_reward(self):
 
+
         self.obsEndef = self.robot.endef_pose
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
         ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.25)
@@ -241,6 +254,7 @@ class ur10svh(ur10SvhBase):
         self.pose_reward_buf.append(pose_reward)
         self.ball_reward_buf.append(ball_reward)
         self.total_reward = pose_reward * ball_reward
+
 
         if self.done:
             self.reward_buff__.append(self.total_reward)
