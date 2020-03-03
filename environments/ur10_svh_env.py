@@ -83,8 +83,8 @@ class ur10svh(ur10SvhBase):
         p_targets = applayMimic(self.p_target12)
         self.p_targets = self.robot.transformAction(p_targets)
         # self.robot.robot.set_generalized_coordinates(p_targets)
-        self.robot.robot.set_pd_targets(p_targets, 0 * p_targets)
-        ee_goal = get_endef_position_by_joint(p_targets[0:6])
+        self.robot.robot.set_pd_targets(self.p_targets, 0 * p_targets)
+        ee_goal = get_endef_position_by_joint(self.p_targets[0:6])
         if self.visualizable:
             visual_objects = self.vis.get_visual_object_list()
             visual_objects["ee_goal"].pos_offset = [-ee_goal[0, 0], -ee_goal[0, 1], ee_goal[0, 2] + 0.30]
