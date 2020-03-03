@@ -57,7 +57,7 @@ class ur10svh(ur10SvhBase):
 
         self.action_space = spaces.Box(-1., 1., shape=[self.action_dim])
 
-        self.observation_space = spaces.Box(low=-2, high=2,
+        self.observation_space = spaces.Box(low=-1, high=1,
                                             shape=[self.ob_dim])
 
         self.total_reward = 0.
@@ -66,7 +66,6 @@ class ur10svh(ur10SvhBase):
             self.ob_dim), np.zeros(self.ob_dim)
 
     def step(self, action):
-
         self.step_number += 1
         self.p_target12 = np.zeros(26)
         skip_counter = 0
@@ -132,6 +131,7 @@ class ur10svh(ur10SvhBase):
 
         self.ob_double[45:48] = self.ball.pose_scaled
         self.ob_double[48:51] = self.ball.velocity_scaled
+
         return self.ob_double
 
     def reset(self):

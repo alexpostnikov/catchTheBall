@@ -5,8 +5,9 @@ try:
     sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 except ValueError:
     pass
-
-sys.path.append("/home/robot/repos/catchTheBall")
+from os.path import dirname
+cath_the_ball_dir = dirname(dirname(os.getcwd()))
+sys.path.append(cath_the_ball_dir)
 from environments.ur10_svh_env import ur10svh
 from environments.ur10_svh_utils import load_yaml
 
@@ -21,13 +22,13 @@ best_mean_reward = -np.inf
 rsg_root = os.path.dirname(os.path.abspath(__file__)) + ''
 log_dir = rsg_root+"/logs/"
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
-config = load_yaml("/home/robot/repos/catchTheBall/"+"/environments/ur10_cfg.yaml")
+config = load_yaml(cath_the_ball_dir+"/environments/ur10_cfg.yaml")
 
 if __name__ == "__main__":
 
     model_path = "best_model.pkl"
-    env = ur10svh("/home/robot/repos/catchTheBall/environments/ur10_cfg.yaml",
-                    resource_directory="/home/robot/repos/catchTheBall/rsc/ur10/", visualize=True)
+    env = ur10svh(cath_the_ball_dir+"/environments/ur10_cfg.yaml",
+                    resource_directory=cath_the_ball_dir+"/rsc/ur10/", visualize=True)
 
     model = TRPO.load(model_path)
     env = DummyVecEnv([env])

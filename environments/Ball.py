@@ -3,7 +3,7 @@ import numpy as np
 
 class Ball:
     def __init__(self, world, vis, visualizable, config):
-        self.ball = world.add_sphere(radius=0.025, mass=0.1)
+        self.ball = world.add_sphere(radius=0.015, mass=0.1)
         # self.ballPose_init = [0.423301, 0.194859, 1.76 - 0.2]
         self.ballPose_init = np.array([0.183301, 0.154859, 1.76])
         self.ball.set_position(self.ballPose_init)
@@ -29,7 +29,10 @@ class Ball:
 
     @property
     def pose(self):
-        return self.ball.get_world_position(0)
+        try:
+            return self.ball.get_world_position() 
+        except TypeError:
+            return self.ball.get_world_position(0)
 
     @property
     def velocity(self):
@@ -37,7 +40,10 @@ class Ball:
 
     @property
     def pose_scaled(self):
-        return self.ball.get_world_position(0) * 0.01
+        try:
+            return self.ball.get_world_position() * 0.01
+        except TypeError:
+            return self.ball.get_world_position(0) * 0.01
 
     @property
     def velocity_scaled(self):

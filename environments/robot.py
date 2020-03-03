@@ -91,7 +91,7 @@ class Robot:
             self.robot.get_frame_idx_by_name("svh_f4"))
 
         # body_index = self.robot.get_body_idx("svh_e2")
-        disp = np.dot(rot, np.array([0.0, 0.04, 0.06]).T).T
+        disp = np.dot(rot, np.array([0.0, 0.04, 0.08]).T).T
         return position + disp
 
     @property
