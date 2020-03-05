@@ -112,13 +112,13 @@ class c_PPO(c_class):
     def __call__(self):
         env_list = []
         print("self.algo_config[num_envs] ",self.algo_config["num_envs"])
-        self.env = RaisimGymVecEnv(self.env, 10, 10)
-        # if self.algo_config["num_envs"] > 1:
-        #     for _ in range(self.algo_config["num_envs"]):
-        #         env_list.append(self.env)
-        #     self.env = DummyVecEnv(env_list)
-        # else:
-        #     self.env = self.env
+        # self.env = RaisimGymVecEnv(self.env, 10, 10)
+        if self.algo_config["num_envs"] > 1:
+            for _ in range(self.algo_config["num_envs"]):
+                env_list.append(self.env)
+            self.env = DummyVecEnv(env_list)
+        else:
+            self.env = self.env
 
         self.algo = PPO2
         if self.algo_config["nn_size"] != 0:

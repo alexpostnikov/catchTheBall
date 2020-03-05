@@ -16,6 +16,7 @@ from .robot import Robot, get_endef_position_by_joint
 import math
 import time
 
+
 class ur10svh(ur10SvhBase):
     """Custom Environment that follows gym interface"""
 
@@ -38,24 +39,21 @@ class ur10svh(ur10SvhBase):
         self.goal_pose = np.array(self.goal_pose_init)
 
         self.robot.reset()
-        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.15]))
+        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.02]))
         self.ball.reset()
         self.recording_time_start = time.time()
         self.ee_goal = self.robot.endef_pose
 
         if self.visualizable:
-            # self.init_vis()
             self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
             self.vis.add_visual_object("init_pose", "sphereMesh", "white", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("goal_pose", "sphereMesh", "green", [0.02, 0.02, 0.02])
-            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow",  [0.02, 0.02, 0.02])
+            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.02, 0.02, 0.02])
 
         self.obsEndef = self.robot.get_endef_pose()
 
         self.p_targets = np.zeros(self.action_dim)
         self.reset()
-
-
 
     def init_ora(self):  # ora -> observation reward actions
 
@@ -148,7 +146,6 @@ class ur10svh(ur10SvhBase):
 
         return self.ob_double
 
-
     def reset(self):
         self.ball_reward_buf = []
         self.pose_reward_buf = []
@@ -181,7 +178,6 @@ class ur10svh(ur10SvhBase):
             except:
                 pass
 
-
     def __call__(self):
         return self
 
@@ -208,7 +204,7 @@ class ur10svh(ur10SvhBase):
             self.done = True
             if self.visualizable:
                 if self.in_recording:
-                    if (time.time() - self.recording_time_start) > 7.0 :
+                    if (time.time() - self.recording_time_start) > 7.0:
                         self.visualizable = False
                         if self.video_folder is not None:
                             self.vis.stop_recording_video_and_save()
@@ -288,7 +284,7 @@ class ur10svh(ur10SvhBase):
         return
 
     def get_ob_dim(self):
-        return  self.ob_dim
+        return self.ob_dim
 
     def get_action_dim(self):
         return self.action_dim

@@ -118,11 +118,11 @@ class Robot:
 
     def get_endef_pose(self):
         body_index = self.robot.get_body_index("svh_e2")
-        w_pose = self.robot.get_frame_world_position(body_index)
-        w_orient = self.robot.get_frame_world_orientation(body_index)
+        w_pose = self.robot.get_world_position(body_index)
+        w_orient = self.robot.get_world_orientation(body_index)
         w_orient = Quaternion(w_orient).rotation_matrix
 
-        pose = w_pose + w_orient @ np.array([0.05, 0.05, 0.02])
+        pose = w_pose + w_orient @ np.array([0.05, 0.1, 0.0])
 
         # position = self.robot.get_frame_world_position(
         #     self.robot.get_frame_idx_by_name("svh_f4"))

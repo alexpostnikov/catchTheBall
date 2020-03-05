@@ -3,11 +3,12 @@
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
 
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg2.yaml,  weight: None},
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,  weight: None},
+  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg2.yaml,  weight: None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg3.yaml,  weight: None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg4.yaml,  weight: None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
+
 
 
   {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
