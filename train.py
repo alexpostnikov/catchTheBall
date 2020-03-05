@@ -55,10 +55,8 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
         "DDPG": cur_dir+"/test_ddpg.py",
         "TD3":  cur_dir+"/test_TD3.py"
     }
-    
+
     c_model = c_models[ALGO]()
-    
-    algo_config = load_yaml(algo_config_path)
     if (str(weight) != "None"):
         print ("Contnuing learning from ", str(weight) )
         c_model.model = algos[ALGO].load(weight, c_model.env)
@@ -69,16 +67,16 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
     shutil.copy2(algo_config_path, video_folder)
     shutil.copy2(cur_dir + env_config_path, video_folder)
     shutil.copy2(runner[ALGO], video_folder)
+    shutil.copytree(cur_dir + "/environments/", video_folder+"/environments/")
     c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
-    # c_model.validate()
 
 
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Process some integers.')
 
-    parser.add_argument('--jobs_config_path', type=str, default="./environments/jobs_cfg.yaml",
+    parser.add_argument('--jobs_config_path', type=str, default="./configs/jobs_cfg.yaml",
                     help='path to config file')
 
     args = parser.parse_args()
@@ -87,7 +85,6 @@ if __name__ == "__main__":
 
     cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))    
 
-
     processes = []
     for i in range(0, jobs_config["num_jobs"]):
         ALGO = jobs_config["jobs"][i]["algo"]
@@ -95,7 +92,7 @@ if __name__ == "__main__":
         algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
         video_folder = check_video_folder(cur_dir+"/log/"+ALGO)
         video_folder = video_folder+"/"
-        p = Process(target=run_learning, args=(ALGO,env_config_path,algo_config_path, video_folder, weight))
+        p = Process(target=run_learning, args=(ALGO, env_config_path, algo_config_path, video_folder, weight))
         processes.append(p)
         p.start()
     

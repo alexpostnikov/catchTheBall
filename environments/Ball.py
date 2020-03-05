@@ -3,7 +3,8 @@ import numpy as np
 
 class Ball:
     def __init__(self, world, vis, visualizable, config):
-        self.ball = world.add_sphere(radius=0.015, mass=0.1)
+        self.ball = world.add_sphere(radius=0.03, mass=0.03)
+        # self.ball = world.add_sphere(radius=0.015, mass=0.03)
         # self.ballPose_init = [0.423301, 0.194859, 1.76 - 0.2]
         self.ballPose_init = np.array([0.383301, 0.154859, 1.76])
         self.ball.set_position(self.ballPose_init)

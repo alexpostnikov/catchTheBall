@@ -1,14 +1,15 @@
   
-  num_envs: 10
+  num_envs: 1
   # ent_coef: (float) Entropy coefficient for the loss calculation
   ent_coef: 0.01
   #gamma: (float) Discount factor
   total_timesteps: 300000000
-  validate_every_timesteps: 10000
+  validate_every_timesteps: 1000
   verbose: 1
   gamma: 0.99
   n_steps: 128
-  nn_size: 128
+  nn_size: 0 # if 0 - use default values
+  #128
   learning_rate: 1e-4
 
   #vf_coef: (float) Value function coefficient for the loss calculation

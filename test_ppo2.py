@@ -27,7 +27,7 @@ log_dir = rsg_root+"/logs/"
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 cath_the_ball_dir = dirname(dirname(os.getcwd()))
 
-config = load_yaml(cath_the_ball_dir+"/environments/ur10_cfg.yaml")
+config = load_yaml(cath_the_ball_dir+"/configs/ur10_cfg.yaml")
 
 
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     model_path = "best_model.pkl"
     # if not os.path.isdir("video_test/"):
     #     os.mkdir("video_test/")
-    env = ur10svh(cath_the_ball_dir+"/environments/ur10_cfg.yaml",
+    env = ur10svh(cath_the_ball_dir+"/configs/ur10_cfg.yaml",
                     resource_directory=cath_the_ball_dir+"/rsc/ur10/", visualize=True)
 
     model = PPO2.load(model_path)

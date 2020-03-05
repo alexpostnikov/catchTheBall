@@ -14,7 +14,7 @@ from .ur10_svh_utils import applayMimic
 from .Ball import Ball
 from .robot import Robot, get_endef_position_by_joint
 import math
-
+import time
 
 class ur10svh(ur10SvhBase):
     """Custom Environment that follows gym interface"""
@@ -22,7 +22,7 @@ class ur10svh(ur10SvhBase):
     def __init__(self, config, resource_directory, video_folder=None, visualize=False):
 
         super(ur10svh, self).__init__(config, resource_directory, video_folder, visualize)
-        self.controlable_joints = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0]
+        self.controllable_joints = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0]
         # MUST BE DONE FOR ALL ENVIRONMENTS
         self.update_cur = False
         self.ob_dim = 51  # convention described on top
@@ -33,23 +33,22 @@ class ur10svh(ur10SvhBase):
         self.desired_fps = 30.
         self.robot = Robot(self.world, raisim.OgreVis.get(), self.visualizable, self.config, resource_directory)
         self.robot.robot_to_init_pose()
+        self.ball = Ball(self.world, raisim.OgreVis.get(), self.visualizable, self.config)
         self.goal_pose_init = self.robot.endef_pose
         self.goal_pose = np.array(self.goal_pose_init)
-        self.ball = Ball(self.world, raisim.OgreVis.get(), self.visualizable, self.config)
-        self.ball.ballPose_init[0] = self.goal_pose_init[0] + 0.25
-        self.ball.ballPose_init[1] = self.goal_pose_init[1]
-        self.ball.ballPose_init[2] = 1.4  # self.goal_pose_init[2]
-        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.05, 0.0, 0.05]))
-        self.robot.reset()
-        self.ball.reset()
 
+        self.robot.reset()
+        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.15]))
+        self.ball.reset()
+        self.recording_time_start = time.time()
+        self.ee_goal = self.robot.endef_pose
 
         if self.visualizable:
             # self.init_vis()
             self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
             self.vis.add_visual_object("init_pose", "sphereMesh", "white", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("goal_pose", "sphereMesh", "green", [0.02, 0.02, 0.02])
-            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.02, 0.02, 0.02])
+            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow",  [0.02, 0.02, 0.02])
 
         self.obsEndef = self.robot.get_endef_pose()
 
@@ -75,7 +74,7 @@ class ur10svh(ur10SvhBase):
         self.p_target12 = np.zeros(26)
         skip_counter = 0
         for i in range(self.p_target12.shape[0]):
-            if self.controlable_joints[i]:
+            if self.controllable_joints[i]:
                 self.p_target12[i] = action[i - skip_counter]
             else:
                 skip_counter += 1
@@ -84,10 +83,14 @@ class ur10svh(ur10SvhBase):
         self.p_targets = self.robot.transformAction(p_targets)
         # self.robot.robot.set_generalized_coordinates(p_targets)
         self.robot.robot.set_pd_targets(self.p_targets, 0 * p_targets)
-        ee_goal = get_endef_position_by_joint(self.p_targets[0:6])
+        self.ee_goal = get_endef_position_by_joint(self.p_targets[0:6])
+        self.ee_goal[0, 0] *= -1
+        self.ee_goal[0, 1] *= -1
+        self.ee_goal[0, 2] += 0.3
+
         if self.visualizable:
             visual_objects = self.vis.get_visual_object_list()
-            visual_objects["ee_goal"].pos_offset = [-ee_goal[0, 0], -ee_goal[0, 1], ee_goal[0, 2] + 0.30]
+            visual_objects["ee_goal"].pos_offset = [self.ee_goal[0, 0], self.ee_goal[0, 1], self.ee_goal[0, 2]]
         loop_count = int(self.control_dt / self.simulation_dt + 1.e-10)
         vis_decimation = int(
             1. / (self.desired_fps * self.simulation_dt) + 1.e-10)
@@ -98,7 +101,12 @@ class ur10svh(ur10SvhBase):
                 self.vis.render_one_frame()
 
                 if not self.in_recording:
+                    self.recording_time_start = time.time()
                     self.in_recording = True
+                    try:
+                        self.vis.showWindow()
+                    except:
+                        pass
                     self.video_name = datetime.now().strftime("%m_%d_%Y_%H:%M:%S") + ".mp4"
                     if self.video_folder is not None:
                         self.vis.start_recording_video(
@@ -128,7 +136,7 @@ class ur10svh(ur10SvhBase):
 
         skip = 0
         for i in range(len(self.gc)):
-            if self.controlable_joints[i]:
+            if self.controllable_joints[i]:
                 self.ob_double[3 * (i - skip)] = math.sin(self.gc[i - skip])
                 self.ob_double[3 * (i - skip) + 1] = math.cos(self.gc[i - skip])
                 self.ob_double[3 * (i - skip) + 2] = self.gv[i - skip] * 0.001
@@ -139,6 +147,7 @@ class ur10svh(ur10SvhBase):
         self.ob_double[48:51] = self.ball.velocity_scaled
 
         return self.ob_double
+
 
     def reset(self):
         self.ball_reward_buf = []
@@ -151,11 +160,11 @@ class ur10svh(ur10SvhBase):
         self.step_number = 0
         self.update_observation()
 
-        if self.curriculum_step == 0:
-
-            self.ball.ballPose_init[0] = self.goal_pose_init[0]+0.25
-            self.ball.ballPose_init[1] = self.goal_pose_init[1]
-            self.ball.ballPose_init[2] = 1.4#self.goal_pose_init[2]
+        # if self.curriculum_step == 0:
+        #
+        #     self.ball.ballPose_init[0] = self.goal_pose_init[0]+0.25
+        #     self.ball.ballPose_init[1] = self.goal_pose_init[1]
+        #     self.ball.ballPose_init[2] = 1.4#self.goal_pose_init[2]
 
         if self.visualizable:
             l = self.vis.get_visual_object_list()
@@ -167,19 +176,11 @@ class ur10svh(ur10SvhBase):
         if not self.visualizable:
             self.visualizable = True
             self.init_vis()
-            # self.vis = raisim.OgreVis.get()
-            # self.vis.set_world(self.world)
-            # self.vis.set_window_size(1280, 720)
-            # self.vis.set_default_callbacks()
-            #
-            # self.vis.set_setup_callback(setup_callback)
-            # self.vis.set_anti_aliasing(2)
-            # self.vis.init_app()
-            #
-            # self.vis.set_desired_fps(self.desired_fps)
-            # self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
-            # self.vis.add_visual_object("init_pose", "sphereMesh", "white", [0.02, 0.02, 0.02])
-            # self.vis.add_visual_object("goal_pose", "sphereMesh", "green", [0.02, 0.02, 0.02])
+            try:
+                self.vis.showWindow()
+            except:
+                pass
+
 
     def __call__(self):
         return self
@@ -206,16 +207,16 @@ class ur10svh(ur10SvhBase):
             self.terminal_counter += 1
             self.done = True
             if self.visualizable:
-                self.visualizable = False
-                # try:
-                #     # vis = raisim.OgreVis.get()
-                #     vis.close_app()
-                # except:
-                #     pass
-
-                if self.video_folder is not None:
-                    self.vis.stop_recording_video_and_save()
-                self.in_recording = False
+                if self.in_recording:
+                    if (time.time() - self.recording_time_start) > 7.0 :
+                        self.visualizable = False
+                        if self.video_folder is not None:
+                            self.vis.stop_recording_video_and_save()
+                            try:
+                                self.vis.hideWindow()
+                            except:
+                                pass
+                        self.in_recording = False
 
             if (self.terminal_counter % self.config["environment"]["render_every_n_resets"] == 0) and (
                     self.visualize_this_step):
@@ -232,29 +233,37 @@ class ur10svh(ur10SvhBase):
 
         self.extra_info["cur_step"] = {
             "r": self.total_reward, "l": self.step_number}
+        self.extra_info["r"] = {self.total_reward}
+        self.extra_info["l"] = self.step_number
         if self.done:
             self.extra_info["episode"] = {"pose_rew": sum(self.pose_reward_buf) / len(self.pose_reward_buf),
                                           "ball_rew": sum(self.ball_reward_buf) / len(self.ball_reward_buf),
                                           "curriculum_step": self.curriculum_step, "r": self.total_reward,
                                           "l": self.step_number}
+            self.extra_info["r"] = {self.total_reward}
+            self.extra_info["l"] = self.step_number
+            self.extra_info["pose_rew"] = sum(self.pose_reward_buf) / len(self.pose_reward_buf)
+            self.extra_info["ball_rew"] = sum(self.ball_reward_buf) / len(self.ball_reward_buf)
+            self.extra_info["curriculum_step"] = self.curriculum_step
 
         return self.extra_info
 
     def update_reward(self):
 
-
         self.obsEndef = self.robot.endef_pose
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
-        ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.25)
+        ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.05, value_at_margin=0.0001)
+        bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
+        pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.00000001)
 
-        bring_dist = np.linalg.norm(self.obsEndef - self.goal_pose)
-        pose_reward = tolerance(bring_dist, (0.0, 0.01), 0.5)
-
-        # print (" pose r: ", pose_reward, " ball_reward: ", ball_reward)
         self.pose_reward_buf.append(pose_reward)
         self.ball_reward_buf.append(ball_reward)
         self.total_reward = pose_reward * ball_reward
 
+        # print ("self.goal_pose - self.ee_goal ", self.goal_pose - self.ee_goal)
+        # t = tolerance(np.linalg.norm(self.goal_pose - self.ee_goal), (0.0, 0.1), 0.2)
+        # self.total_reward *= tolerance(np.linalg.norm(self.goal_pose - self.ee_goal), (0.0, 0.1), 0.2)
+        # print("self.total_reward ", self.total_reward)
 
         if self.done:
             self.reward_buff__.append(self.total_reward)
@@ -277,3 +286,19 @@ class ur10svh(ur10SvhBase):
         except ZeroDivisionError:
             pass
         return
+
+    def get_ob_dim(self):
+        return  self.ob_dim
+
+    def get_action_dim(self):
+        return self.action_dim
+
+    def turn_off_visualization(self):
+        self.visualizable = False
+        if self.video_folder is not None:
+            self.vis.stop_recording_video_and_save()
+            try:
+                self.vis.hideWindow()
+            except:
+                pass
+        self.in_recording = False

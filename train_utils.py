@@ -7,7 +7,7 @@ rsg_root = os.path.dirname(os.path.abspath(__file__)) + ''
 log_dir = rsg_root+"/logs/"
 ALGO = "PPO"
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
-config = load_yaml(cur_dir+"/environments/ur10_cfg.yaml")
+config = load_yaml(cur_dir+"/configs/ur10_cfg.yaml")
 
 def check_video_folder(video_folder):
 

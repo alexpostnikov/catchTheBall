@@ -1,10 +1,14 @@
 seed: 1
-record_video: no
+
 
 environment:
   render: no
-  render_every_n_resets:  300
-  
+  render_every_n_resets:  500
+
+
+  num_threads: 10
+  num_envs: 10
+
   simulation_dt: 0.0025
   control_dt: 0.01
   max_time: 8.0
