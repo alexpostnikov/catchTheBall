@@ -64,7 +64,7 @@ class c_class():
 
     def learn(self):
 
-        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=1000, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
+        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=10, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
 
     def learning_callback(self,locals, globals):
         # print ("inside callback")
@@ -128,12 +128,10 @@ class c_PPO(c_class):
             self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
                                    verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],
                                    gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder)
-        
-        
+
         return self
 
     def validate(self):
-        print ("here!")
         obs = self.env.reset()
         obs = self.env.reset()
         rew = []
@@ -145,63 +143,60 @@ class c_PPO(c_class):
         for i in range(5000):
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
-            try:
-                if isinstance(dones, np.ndarray):
-                # if self.algo_config["num_envs"]> 1:
-                    is_done = any(dones) == True
+
+            if isinstance(dones, np.ndarray):
+            # if self.algo_config["num_envs"]> 1:
+                is_done = any(dones) == True
+            else:
+                is_done = dones
+
+            if is_done:
+                if not isinstance(dones, np.ndarray):
+                # if self.algo_config["num_envs"] == 1:
+                    rew.append(info["episode"]["r"])
+
+                    pose_rew.append(info["episode"]["pose_rew"])
+                    ball_rew.append(info["episode"]["ball_rew"])
+                    l.append(info["episode"]["l"])
+                    cur_step = info["episode"]["curriculum_step"]
+                    obs = self.env.reset()
                 else:
-                    is_done = dones
+                # if self.algo_config["num_envs"] > 1:
+                    info = info[np.where(dones == True)[0][0]]
+                    rew.append(info["episode"]["r"])
+                    pose_rew.append(info["episode"]["pose_rew"])
+                    ball_rew.append(info["episode"]["ball_rew"])
+                    l.append(info["episode"]["l"])
+                    r.append(info["episode"]["r"])
+                    cur_step = info["episode"]["curriculum_step"]
 
-                if is_done:
-                    if not isinstance(dones, np.ndarray):
-                    # if self.algo_config["num_envs"] == 1:
-                        rew.append(info["episode"]["r"])
+                    obs = self.env.reset()
 
-                        pose_rew.append(info["episode"]["pose_rew"])
-                        ball_rew.append(info["episode"]["ball_rew"])
-                        l.append(info["episode"]["l"])
-                        cur_step = info["episode"]["curriculum_step"]
-                        obs = self.env.reset()
-                    else:
-                    # if self.algo_config["num_envs"] > 1:
-                        info = info[np.where(dones == True)[0][0]]
-                        rew.append(info["episode"]["r"])
-                        pose_rew.append(info["episode"]["pose_rew"])
-                        ball_rew.append(info["episode"]["ball_rew"])
-                        l.append(info["episode"]["l"])
-                        r.append(info["episode"]["r"])
-                        cur_step = info["episode"]["curriculum_step"]
+        rew = sum(rew)/len(rew)
+        if rew > 0.7:
+            if isinstance(self.env, DummyVecEnv):
+                for env in self.env.envs:
+                    env.update_cur = True
+            else:
+                self.env.update_cur = True
+        rew = rew * (cur_step + 1)  ### next curriculum -> better model apriory?
 
-                        obs = self.env.reset()
-            except:
-                pass
 
+        self.ep_infos = {}
+        self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
+        self.ep_infos["pose_rew"] = sum(pose_rew)/len(pose_rew)
+        self.ep_infos["l"] = sum(l)/len(l)
         try:
-            rew = sum(rew)/len(rew)
-            if rew > 0.7:
-                if isinstance(self.env, DummyVecEnv):
-                    for env in self.env.envs:
-                        env.update_cur = True
-                else:
-                    self.env.update_cur = True
-            rew = rew * (cur_step + 1)  ### next curriculum -> better model apriory?
+            self.ep_infos["r"] = sum(r) / len(r)
+        except ZeroDivisionError:
+            self.ep_infos["r"] = 0
+        self.ep_infos["curriculum_step"] = cur_step
 
+        if rew > self.best_mean_reward:
+                self.best_mean_reward = rew
+                self.save_model_flag = True
 
-            self.ep_infos = {}
-            self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
-            self.ep_infos["pose_rew"] = sum(pose_rew)/len(pose_rew)
-            self.ep_infos["l"] = sum(l)/len(l)
-            try:
-                self.ep_infos["r"] = sum(r) / len(r)
-            except ZeroDivisionError:
-                self.ep_infos["r"] = 0
-            self.ep_infos["curriculum_step"] = cur_step
-
-            if rew > self.best_mean_reward:
-                    self.best_mean_reward = rew
-                    self.save_model_flag = True
-        except:
-            rew = [-1]
+        rew = [-1]
 
         return rew
 

@@ -38,8 +38,8 @@ class ur10svh(ur10SvhBase):
         self.goal_pose_init = self.robot.endef_pose
         self.goal_pose = np.array(self.goal_pose_init)
 
-        self.robot.reset()
-        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.02]))
+
+        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0,0.0]))
         self.ball.reset()
         self.recording_time_start = time.time()
         self.ee_goal = self.robot.endef_pose
@@ -152,6 +152,11 @@ class ur10svh(ur10SvhBase):
 
         self.robot.reset(self.curriculum_step)
 
+
+
+
+
+        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.0 + 0.05*self.curriculum_step]))
         self.ball.reset(self.curriculum_step)
 
         self.step_number = 0
@@ -202,6 +207,7 @@ class ur10svh(ur10SvhBase):
         if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.4):
             self.terminal_counter += 1
             self.done = True
+            # self.total_reward += 5 * (self.ball_reward * self.pose_reward)
             if self.visualizable:
                 if self.in_recording:
                     if (time.time() - self.recording_time_start) > 7.0:
@@ -248,22 +254,23 @@ class ur10svh(ur10SvhBase):
 
         self.obsEndef = self.robot.endef_pose
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
-        ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.05, value_at_margin=0.0001)
-        bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
-        pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.00000001)
+        self.ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.05, value_at_margin=0.0001)
 
-        self.pose_reward_buf.append(pose_reward)
-        self.ball_reward_buf.append(ball_reward)
-        self.total_reward = pose_reward * ball_reward
+        bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
+        self.pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.00000001)
+
+        self.pose_reward_buf.append(self.pose_reward)
+        self.ball_reward_buf.append(self.ball_reward)
+        self.total_reward = self.pose_reward * self.ball_reward
 
         # print ("self.goal_pose - self.ee_goal ", self.goal_pose - self.ee_goal)
         # t = tolerance(np.linalg.norm(self.goal_pose - self.ee_goal), (0.0, 0.1), 0.2)
         # self.total_reward *= tolerance(np.linalg.norm(self.goal_pose - self.ee_goal), (0.0, 0.1), 0.2)
         # print("self.total_reward ", self.total_reward)
 
-        if self.done:
-            self.reward_buff__.append(self.total_reward)
-            self.update_curriculum_status()
+        self.reward_buff__.append(self.pose_reward)
+        self.reward_buff__.append(self.ball_reward)
+        self.update_curriculum_status()
         return self.total_reward
 
     def observe(self):
@@ -275,7 +282,7 @@ class ur10svh(ur10SvhBase):
             self.curriculum_step += 1
             self.reward_buff__.clear()
         try:
-            if len(self.reward_buff__) > 10 and (sum(self.reward_buff__) / len(self.reward_buff__)) > 0.7:
+            if len(self.reward_buff__) > 100000 and (sum(self.reward_buff__) / len(self.reward_buff__)) > 0.7:
                 if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
                     self.curriculum_step += 1
                     self.reward_buff__.clear()

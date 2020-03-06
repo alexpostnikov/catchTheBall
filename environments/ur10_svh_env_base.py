@@ -144,7 +144,10 @@ class ur10SvhBase(gym.Env):
         self.ob_double, self.ob_scaled = np.zeros(
             self.ob_dim), np.zeros(self.ob_dim)
         self.body_linear_vel, self.body_angular_vel = np.zeros(3), np.zeros(3)
-        self.reward_buff__ = collections.deque(maxlen=100)
+        self.buf_len = 1000000
+        self.reward_buff__ = collections.deque(maxlen=self.buf_len)
+        print (len(self.reward_buff__))
+
         self.ball_reward_buf = []
         self.pose_reward_buf = []
 
