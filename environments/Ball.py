@@ -18,7 +18,8 @@ class Ball:
     def reset(self, curriculum_step=0):
         if self.config["environment"]["curruclum"]["use_curruclum"]:
             self.disp = np.array(
-                self.config["environment"]["curruclum"]["ball_pose_distrib"][curriculum_step])
+                self.config["environment"]["curruclum"]["ball_pose_disp_max"][curriculum_step]) - np.array(
+                self.config["environment"]["curruclum"]["ball_pose_disp_min"][curriculum_step])
             self.disp = self.disp * (np.random.rand(3) - np.array([0.5, 0.5, 0.5]))
         self.ballPose = self.ballPose_init + self.disp
         self.ball.set_position(self.ballPose)

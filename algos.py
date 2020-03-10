@@ -36,7 +36,7 @@ class c_class():
         pose_rew = []
         ball_rew = []
         l = []
-        r =[]
+        r = []
         for i in range(5000):
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
@@ -120,6 +120,7 @@ class c_PPO(c_class):
         else:
             self.env = self.env
 
+
         self.algo = PPO2
         if self.algo_config["nn_size"] != 0:
             self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"], verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder, policy_kwargs=dict(
@@ -128,6 +129,7 @@ class c_PPO(c_class):
             self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
                                    verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],
                                    gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder)
+                                   # gamma=self.algo_config["gamma"], tensorboard_log=None)
 
         return self
 

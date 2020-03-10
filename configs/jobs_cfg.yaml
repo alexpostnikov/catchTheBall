@@ -4,6 +4,12 @@
   jobs: [
   {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,  weight: None},
+  {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
+
+
+
+
+
 
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg2.yaml,  weight: None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg3.yaml,  weight: None},
@@ -11,7 +17,7 @@
 
 
 
-  {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
+
   {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
   {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
   {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},

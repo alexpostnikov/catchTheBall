@@ -152,11 +152,7 @@ class ur10svh(ur10SvhBase):
 
         self.robot.reset(self.curriculum_step)
 
-
-
-
-
-        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.0 + 0.05*self.curriculum_step]))
+        self.ball.set_init_pose(self.robot.endef_pose)  # + np.array([0.0, 0.0, 0.0 + 0.05*self.curriculum_step]))
         self.ball.reset(self.curriculum_step)
 
         self.step_number = 0
@@ -263,11 +259,6 @@ class ur10svh(ur10SvhBase):
         self.ball_reward_buf.append(self.ball_reward)
         self.total_reward = self.pose_reward * self.ball_reward
 
-        # print ("self.goal_pose - self.ee_goal ", self.goal_pose - self.ee_goal)
-        # t = tolerance(np.linalg.norm(self.goal_pose - self.ee_goal), (0.0, 0.1), 0.2)
-        # self.total_reward *= tolerance(np.linalg.norm(self.goal_pose - self.ee_goal), (0.0, 0.1), 0.2)
-        # print("self.total_reward ", self.total_reward)
-
         self.reward_buff__.append(self.pose_reward)
         self.reward_buff__.append(self.ball_reward)
         self.update_curriculum_status()
@@ -282,7 +273,7 @@ class ur10svh(ur10SvhBase):
             self.curriculum_step += 1
             self.reward_buff__.clear()
         try:
-            if len(self.reward_buff__) > 100000 and (sum(self.reward_buff__) / len(self.reward_buff__)) > 0.7:
+            if len(self.reward_buff__) > 100000 and (sum(self.reward_buff__) / len(self.reward_buff__)) > 0.65:
                 if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
                     self.curriculum_step += 1
                     self.reward_buff__.clear()
