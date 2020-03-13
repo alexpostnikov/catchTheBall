@@ -26,8 +26,8 @@ class ur10svh(ur10SvhBase):
         self.controllable_joints = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0]
         # MUST BE DONE FOR ALL ENVIRONMENTS
         self.update_cur = False
-        self.ob_dim = 51  # convention described on top
-        self.action_dim = 26 - 11
+        self.ob_dim = 62  # convention described on top
+        self.action_dim = 15
         self.init_ora()
         self.curriculum_step = self.config["environment"]["curruclum"]["curruclum_step_init"]
 
@@ -37,12 +37,14 @@ class ur10svh(ur10SvhBase):
         self.ball = Ball(self.world, raisim.OgreVis.get(), self.visualizable, self.config)
         self.goal_pose_init = self.robot.endef_pose
         self.goal_pose = np.array(self.goal_pose_init)
+        self.ball_reward_averaged = 0
+        self.pose_reward_averaged = 0
 
-
-        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0,0.0]))
+        self.ball.set_init_pose(self.robot.endef_pose + np.array([0.0, 0.0, 0.0]))
         self.ball.reset()
         self.recording_time_start = time.time()
         self.ee_goal = self.robot.endef_pose
+        self.update_cur_inner = False
 
         if self.visualizable:
             self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
@@ -57,11 +59,10 @@ class ur10svh(ur10SvhBase):
 
     def init_ora(self):  # ora -> observation reward actions
 
-        self.action_space = spaces.Box(-1., 1., shape=[self.action_dim])
+        self.action_space = spaces.Box(-1, 1., shape=[self.action_dim])
 
         self.observation_space = spaces.Box(low=-1, high=1,
                                             shape=[self.ob_dim])
-
         self.total_reward = 0.
         self.terminal_reward_coeff, self.done = 0., False
         self.ob_double, self.ob_scaled = np.zeros(
@@ -77,11 +78,14 @@ class ur10svh(ur10SvhBase):
             else:
                 skip_counter += 1
 
-        p_targets = applayMimic(self.p_target12)
-        self.p_targets = self.robot.transformAction(p_targets)
-        # self.robot.robot.set_generalized_coordinates(p_targets)
-        self.robot.robot.set_pd_targets(self.p_targets, 0 * p_targets)
+        self.p_targets = self.robot.transformAction(self.p_target12)
+        self.p_targets = applayMimic(self.p_targets)
+
+        self.robot.robot.set_pd_targets(self.p_targets, 0 * self.p_targets)
+        # print (self.p_targets[6:])
+        # self.robot.robot.set_pd_targets(self.gc, 0 * self.p_targets)
         self.ee_goal = get_endef_position_by_joint(self.p_targets[0:6])
+
         self.ee_goal[0, 0] *= -1
         self.ee_goal[0, 1] *= -1
         self.ee_goal[0, 2] += 0.3
@@ -115,15 +119,23 @@ class ur10svh(ur10SvhBase):
         # update observation
         self.update_observation()
 
-        # update if episode is over or not
-        self.is_terminal_state()
-
         # update reward
         self.update_reward()
+        self.is_terminal_state()
+        self.update_extra_info()
+        # update if episode is over or not
+
 
         # update extra info
-        self.update_extra_info()
 
+        if any(np.isnan(self.ob_scaled)) == True:
+            print ("self.ob_scaled, \n", self.ob_scaled)
+            print ("action, \n", action)
+            raise
+
+        if self.done:
+            self.ball_reward_buf.clear()
+            self.pose_reward_buf.clear()
         return np.asarray(self.ob_scaled), self.total_reward, self.done, self.extra_info
 
     def update_observation(self):
@@ -132,24 +144,24 @@ class ur10svh(ur10SvhBase):
         self.ob_double, self.ob_scaled = np.zeros(
             self.ob_dim), np.zeros(self.ob_dim)
 
-        skip = 0
+        counter = 0
         for i in range(len(self.gc)):
             if self.controllable_joints[i]:
-                self.ob_double[3 * (i - skip)] = math.sin(self.gc[i - skip])
-                self.ob_double[3 * (i - skip) + 1] = math.cos(self.gc[i - skip])
-                self.ob_double[3 * (i - skip) + 2] = self.gv[i - skip] * 0.001
-            else:
-                skip += 1
+                self.ob_double[counter] = math.sin(self.gc[i])
+                counter += 1
+                self.ob_double[counter] = math.cos(self.gc[i])
+                counter += 1
+                self.ob_double[counter] = self.gv[i] * 0.001
+                counter += 1
 
-        self.ob_double[45:48] = self.ball.pose_scaled
-        self.ob_double[48:51] = self.ball.velocity_scaled
-
+        self.ob_double[counter:counter+3] = self.ball.pose_scaled
+        counter += 3
+        self.ob_double[counter:counter+3] = self.ball.velocity_scaled
+        counter += 3
+        self.ob_double[counter:counter+11] = self.get_ball_collision()
         return self.ob_double
 
     def reset(self):
-        self.ball_reward_buf = []
-        self.pose_reward_buf = []
-
         self.robot.reset(self.curriculum_step)
 
         self.ball.set_init_pose(self.robot.endef_pose)  # + np.array([0.0, 0.0, 0.0 + 0.05*self.curriculum_step]))
@@ -157,12 +169,6 @@ class ur10svh(ur10SvhBase):
 
         self.step_number = 0
         self.update_observation()
-
-        # if self.curriculum_step == 0:
-        #
-        #     self.ball.ballPose_init[0] = self.goal_pose_init[0]+0.25
-        #     self.ball.ballPose_init[1] = self.goal_pose_init[1]
-        #     self.ball.ballPose_init[2] = 1.4#self.goal_pose_init[2]
 
         if self.visualizable:
             l = self.vis.get_visual_object_list()
@@ -199,14 +205,20 @@ class ur10svh(ur10SvhBase):
             np.random.seed(seed)
 
     def is_terminal_state(self):
+
         self.done = False
-        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.4):
+        # if (self.step_number >= self.max_step): # or (self.ball.pose[2] < 1.0) or (self.ball.pose[2] > 2.5):
+        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 1.0) or (self.ball.pose[2] > 2.5):
             self.terminal_counter += 1
             self.done = True
-            # self.total_reward += 5 * (self.ball_reward * self.pose_reward)
+            self.total_reward += 2 * (self.ball_reward * self.pose_reward)
+            self.ball_reward_averaged = np.mean(np.array(self.ball_reward_buf))
+            self.pose_reward_averaged = np.mean(np.array(self.pose_reward_buf))
+
+
             if self.visualizable:
                 if self.in_recording:
-                    if (time.time() - self.recording_time_start) > 7.0:
+                    if (time.time() - self.recording_time_start) > 6.0:
                         self.visualizable = False
                         if self.video_folder is not None:
                             self.vis.stop_recording_video_and_save()
@@ -224,11 +236,11 @@ class ur10svh(ur10SvhBase):
                     self.vis.init_app()
                 except:
                     pass
+        self.update_curriculum_status()
         return self.done
 
     def update_extra_info(self):
         self.extra_info = {}
-
         self.extra_info["cur_step"] = {
             "r": self.total_reward, "l": self.step_number}
         self.extra_info["r"] = {self.total_reward}
@@ -251,17 +263,17 @@ class ur10svh(ur10SvhBase):
         self.obsEndef = self.robot.endef_pose
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
         self.ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.05, value_at_margin=0.0001)
-
+        # self.ball_reward = 1
         bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
         self.pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.00000001)
-
         self.pose_reward_buf.append(self.pose_reward)
         self.ball_reward_buf.append(self.ball_reward)
-        self.total_reward = self.pose_reward * self.ball_reward
+        #self.ee_rew = tolerance(np.linalg.norm(self.ee_goal-self.goal_pose), (0,0.05), 1.0, value_at_margin=0.00000001)
 
-        self.reward_buff__.append(self.pose_reward)
-        self.reward_buff__.append(self.ball_reward)
-        self.update_curriculum_status()
+        self.total_reward = self.pose_reward #* self.ball_reward * self.ee_rew
+
+
+
         return self.total_reward
 
     def observe(self):
@@ -271,14 +283,17 @@ class ur10svh(ur10SvhBase):
         if self.update_cur:
             self.update_cur = False
             self.curriculum_step += 1
-            self.reward_buff__.clear()
+            self.pose_reward_buf.clear()
+            self.update_cur_inner = False
+
         try:
-            if len(self.reward_buff__) > 100000 and (sum(self.reward_buff__) / len(self.reward_buff__)) > 0.65:
+            if ((sum(self.ball_reward_buf) / len(self.ball_reward_buf)) > 0.9) and ((sum(self.pose_reward_buf) / len(self.pose_reward_buf)) > 0.9):
                 if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
-                    self.curriculum_step += 1
-                    self.reward_buff__.clear()
+                    self.update_cur_inner = True
+
         except ZeroDivisionError:
             pass
+
         return
 
     def get_ob_dim(self):
@@ -296,3 +311,20 @@ class ur10svh(ur10SvhBase):
             except:
                 pass
         self.in_recording = False
+
+    def get_ball_collision(self):
+
+        desired_col_indexes = {26: 0.1, 24: 0.1, 22: 0.1, 20: 0.1, 19: 0.1, 8: 0.1, 6: 0.1, 15: 0.1, 9: 0.1, 11: 0.1, 10: 0.1}
+
+        contacts = self.robot.robot.get_contacts()
+        for contact in contacts:
+
+            if contact.get_pair_object_index() != self.robot.index_in_world:
+
+                if contact.get_local_body_index() in list(desired_col_indexes.keys()):
+                    # pass
+                    desired_col_indexes[contact.get_local_body_index()] = 0.9
+
+        rewards = np.array(list(desired_col_indexes.values()))
+        return rewards
+

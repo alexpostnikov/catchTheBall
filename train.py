@@ -68,23 +68,19 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
     shutil.copy2(cur_dir + env_config_path, video_folder)
     shutil.copy2(runner[ALGO], video_folder)
     shutil.copytree(cur_dir + "/environments/", video_folder+"/environments/")
+    shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
     c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
-
 
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Process some integers.')
-
     parser.add_argument('--jobs_config_path', type=str, default="./configs/jobs_cfg.yaml",
                     help='path to config file')
-
     args = parser.parse_args()
     jobs_config = load_yaml(args.jobs_config_path)
     env_config_path = jobs_config["env_config_path"]
-
-    cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))    
-
+    cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
     processes = []
     for i in range(0, jobs_config["num_jobs"]):
         ALGO = jobs_config["jobs"][i]["algo"]

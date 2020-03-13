@@ -12,17 +12,12 @@ from environments.ur10_svh_env import ur10svh
 from environments.ur10_svh_utils import load_yaml
 
 from stable_baselines.common.vec_env import DummyVecEnv
-
 from stable_baselines import TRPO
 
-import numpy as np
-
-
-best_mean_reward = -np.inf
-rsg_root = os.path.dirname(os.path.abspath(__file__)) + ''
-log_dir = rsg_root+"/logs/"
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
-config = load_yaml(cath_the_ball_dir+"/configs/ur10_cfg.yaml")
+cath_the_ball_dir = dirname(dirname(os.getcwd()))
+
+config = load_yaml("./configs/ur10_cfg.yaml")
 
 if __name__ == "__main__":
 

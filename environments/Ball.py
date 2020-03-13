@@ -28,6 +28,12 @@ class Ball:
         return
 
     @property
+    def index_in_world(self):
+        for index, object_ in enumerate(self.world.get_object_list()):
+            if object_ == self.ball:
+                return index
+
+    @property
     def pose(self):
         try:
             return self.ball.get_world_position() 

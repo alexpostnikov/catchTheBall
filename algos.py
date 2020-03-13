@@ -49,6 +49,13 @@ class c_class():
                 r.append(info["episode"]["r"])
                 cur_step = info["episode"]["curriculum_step"]
         rew = sum(rew)/len(rew)
+        print (rew)
+        if rew > 0.2:
+            if isinstance(self.env, DummyVecEnv):
+                for env in self.env.envs:
+                    env.update_cur = True
+            else:
+                self.env.update_cur = True
         rew = rew * (cur_step + 1) ### next curriculum -> better model apriory?
         self.ep_infos = {}
         self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
@@ -66,9 +73,32 @@ class c_class():
 
         self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=10, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
 
+    def check_curriculum(self):
+        try:
+            if isinstance(self.env, DummyVecEnv):
+                do_upd = True
+                for env in self.env.envs:
+                    if (env.pose_reward_averaged < 0.9) or (
+                            env.ball_reward_averaged < 0.9):
+                        do_upd = False
+                if do_upd:
+                    for env in self.env.envs:
+                        env.update_cur = True
+
+            else:
+                if self.env.update_cur_inner:
+                    if self.env.pose_reward_averaged > 0.9 and self.env.ball_reward_averaged > 0.9:
+                        self.env.update_cur = True
+                    self.env.ball_reward_buf.clear()
+                    self.env.pose_reward_buf.clear()
+
+        except ZeroDivisionError:
+            print("zero division in check_curriculum!")
+
     def learning_callback(self,locals, globals):
-        # print ("inside callback")
-        # self.timestamp = locals["self"].num_timesteps
+
+        self.check_curriculum()
+
         if  locals["self"].num_timesteps - self.timestamp > self.algo_config["validate_every_timesteps"]:
             self.validate()
             self.timestamp = locals["self"].num_timesteps
@@ -80,7 +110,7 @@ class c_class():
             except:
                 pass
 
-        if time.time() - self.saving_time > 60:
+        if time.time() - self.saving_time > 300:
             self.saving_time = time.time()
             locals["self"].save(self.video_folder + "model_"+datetime.now().strftime("%m_%d_%Y_%H:%M:%S")+".pkl")
         try:
@@ -175,7 +205,7 @@ class c_PPO(c_class):
                     obs = self.env.reset()
 
         rew = sum(rew)/len(rew)
-        if rew > 0.7:
+        if rew > 0.2:
             if isinstance(self.env, DummyVecEnv):
                 for env in self.env.envs:
                     env.update_cur = True
@@ -198,8 +228,6 @@ class c_PPO(c_class):
                 self.best_mean_reward = rew
                 self.save_model_flag = True
 
-        rew = [-1]
-
         return rew
 
 
@@ -211,16 +239,17 @@ class c_TRPO(c_class):
         self.video_folder = video_folder
         self.env = env
         self.algo = TRPO
-        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"], 
-                              verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=video_folder,
-                              policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]], 
-                                                                vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+
 
         self.save_model_flag = True
         self.ep_infos = None
         self.timestamp = 0
         
     def __call__(self):
+        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"],
+                              verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=self.video_folder,
+                              policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
+                                                                vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
  

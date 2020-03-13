@@ -5,29 +5,24 @@ try:
     sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 except ValueError:
     pass
-import gym
+
 from os.path import dirname
 cath_the_ball_dir = dirname(dirname(os.getcwd()))
+
 sys.path.append(cath_the_ball_dir)
 from environments.ur10_svh_env import ur10svh
 from environments.ur10_svh_utils import load_yaml
-from stable_baselines.common.policies import MlpPolicy
-from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines.common.vec_env import SubprocVecEnv
-from stable_baselines import PPO2, TD3, TRPO, DDPG, GAIL
-from stable_baselines.common import set_global_seeds, make_vec_env
-import yaml
-import argparse
-import numpy as np
+from stable_baselines.common.vec_env import DummyVecEnv
+
+from stable_baselines import PPO2
 
 
-best_mean_reward = -np.inf
-rsg_root = os.path.dirname(os.path.abspath(__file__)) + ''
-log_dir = rsg_root+"/logs/"
+
+
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 cath_the_ball_dir = dirname(dirname(os.getcwd()))
 
-config = load_yaml(cath_the_ball_dir+"/configs/ur10_cfg.yaml")
+config = load_yaml("./configs/ur10_cfg.yaml")
 
 
 
@@ -36,7 +31,7 @@ if __name__ == "__main__":
     model_path = "best_model.pkl"
     # if not os.path.isdir("video_test/"):
     #     os.mkdir("video_test/")
-    env = ur10svh(cath_the_ball_dir+"/configs/ur10_cfg.yaml",
+    env = ur10svh(cur_dir+"/configs/ur10_cfg.yaml",
                     resource_directory=cath_the_ball_dir+"/rsc/ur10/", visualize=True)
 
     model = PPO2.load(model_path)

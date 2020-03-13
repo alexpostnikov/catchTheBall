@@ -65,6 +65,13 @@ class Robot:
                                          1.44, 0.98, 0.58, 1.09, 1.36, 1.5, 0.29, 1.09,
                                          1.36, 1.49, 0.89, 1.35, 1.42, 0.30, 0.89, 1.34,
                                          1.46])
+        self.index_in_world = None
+        obj_list = self.world.get_object_list()
+        self.world.integrate()
+        for index, object_ in enumerate(obj_list):
+            if object_ == self.robot:
+                self.index_in_world = index
+        del obj_list
 
     def transformAction(self, action):
         origin_maximum = self.maxJointsAngles
@@ -94,11 +101,13 @@ class Robot:
         self.joint_p_gains = np.array([2000., 2000., 2000., 300., 200., 200., 60, 60, 60,
                                        60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
                                        60])
-        self.joint_p_gains[6:] *= 10
-
+        # self.joint_p_gains[6:] *= 10
+        self.joint_p_gains *= 0
+        self.joint_p_gains += 6000
         self.joint_d_gains = np.array([800., 800., 800., 200., 200., 40., 40, 40, 40,
                                        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40])
-        self.joint_p_gains[6:] *= 2
+        self.joint_d_gains *= 0
+        self.joint_d_gains += 1000
 
         self.robot.set_pd_gains(self.joint_p_gains, self.joint_d_gains)
         self.robot.set_generalized_forces(np.zeros(self.gv_dim))
@@ -122,7 +131,7 @@ class Robot:
         w_pose = self.robot.get_world_position(body_index)
         w_orient = self.robot.get_world_orientation(body_index)
         w_orient = Quaternion(w_orient).rotation_matrix
-
+                            # parallel to fing, height, perpend to fing
         pose = w_pose + w_orient @ np.array([0.05, 0.03, 0.03])
 
         # position = self.robot.get_frame_world_position(
@@ -133,6 +142,10 @@ class Robot:
         # body_index = self.robot.get_body_idx("svh_e2")
         # disp = np.dot(rot, np.array([0.0, 0.04, 0.08]).T).T
         return pose
+
+    # @property
+    # def index_in_world(self):
+    #     return self.index_in_world
 
     @property
     def endef_pose(self):
