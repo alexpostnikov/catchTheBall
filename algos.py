@@ -49,13 +49,7 @@ class c_class():
                 r.append(info["episode"]["r"])
                 cur_step = info["episode"]["curriculum_step"]
         rew = sum(rew)/len(rew)
-        print (rew)
-        if rew > 0.2:
-            if isinstance(self.env, DummyVecEnv):
-                for env in self.env.envs:
-                    env.update_cur = True
-            else:
-                self.env.update_cur = True
+
         rew = rew * (cur_step + 1) ### next curriculum -> better model apriory?
         self.ep_infos = {}
         self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
@@ -78,8 +72,8 @@ class c_class():
             if isinstance(self.env, DummyVecEnv):
                 do_upd = True
                 for env in self.env.envs:
-                    if (env.pose_reward_averaged < 0.9) or (
-                            env.ball_reward_averaged < 0.9):
+                    if (env.pose_reward_averaged < 0.8) or (
+                            env.ball_reward_averaged < 0.8):
                         do_upd = False
                 if do_upd:
                     for env in self.env.envs:
@@ -87,7 +81,7 @@ class c_class():
 
             else:
                 if self.env.update_cur_inner:
-                    if self.env.pose_reward_averaged > 0.9 and self.env.ball_reward_averaged > 0.9:
+                    if self.env.pose_reward_averaged > 0.8 and self.env.ball_reward_averaged > 0.8:
                         self.env.update_cur = True
                     self.env.ball_reward_buf.clear()
                     self.env.pose_reward_buf.clear()

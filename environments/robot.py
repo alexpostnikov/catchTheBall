@@ -101,13 +101,13 @@ class Robot:
         self.joint_p_gains = np.array([2000., 2000., 2000., 300., 200., 200., 60, 60, 60,
                                        60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
                                        60])
-        # self.joint_p_gains[6:] *= 10
-        self.joint_p_gains *= 0
-        self.joint_p_gains += 6000
+        self.joint_p_gains[6:] *= 5
+        # self.joint_p_gains *= 0
+        # self.joint_p_gains +=
         self.joint_d_gains = np.array([800., 800., 800., 200., 200., 40., 40, 40, 40,
                                        40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40])
-        self.joint_d_gains *= 0
-        self.joint_d_gains += 1000
+        # self.joint_d_gains *= 0
+        # self.joint_d_gains += 1000
 
         self.robot.set_pd_gains(self.joint_p_gains, self.joint_d_gains)
         self.robot.set_generalized_forces(np.zeros(self.gv_dim))
@@ -132,7 +132,7 @@ class Robot:
         w_orient = self.robot.get_world_orientation(body_index)
         w_orient = Quaternion(w_orient).rotation_matrix
                             # parallel to fing, height, perpend to fing
-        pose = w_pose + w_orient @ np.array([0.05, 0.03, 0.03])
+        pose = w_pose + w_orient @ np.array([0.05, 0.05, 0.03])
 
         # position = self.robot.get_frame_world_position(
         #     self.robot.get_frame_idx_by_name("svh_f4"))

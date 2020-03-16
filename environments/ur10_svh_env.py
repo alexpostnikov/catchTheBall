@@ -208,7 +208,7 @@ class ur10svh(ur10SvhBase):
 
         self.done = False
         # if (self.step_number >= self.max_step): # or (self.ball.pose[2] < 1.0) or (self.ball.pose[2] > 2.5):
-        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 1.0) or (self.ball.pose[2] > 2.5):
+        if (self.step_number >= self.max_step) or (self.ball.pose[2] < 0.5) or (self.ball.pose[2] > 2.5):
             self.terminal_counter += 1
             self.done = True
             self.total_reward += 2 * (self.ball_reward * self.pose_reward)
@@ -259,20 +259,18 @@ class ur10svh(ur10SvhBase):
         return self.extra_info
 
     def update_reward(self):
-
         self.obsEndef = self.robot.endef_pose
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
         self.ball_reward = tolerance(catch_dist, (0.0, 0.01), 0.05, value_at_margin=0.0001)
-        # self.ball_reward = 1
+
         bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
         self.pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.00000001)
         self.pose_reward_buf.append(self.pose_reward)
         self.ball_reward_buf.append(self.ball_reward)
-        #self.ee_rew = tolerance(np.linalg.norm(self.ee_goal-self.goal_pose), (0,0.05), 1.0, value_at_margin=0.00000001)
 
-        self.total_reward = self.pose_reward #* self.ball_reward * self.ee_rew
+        self.ee_rew = tolerance(np.linalg.norm(self.ee_goal-self.goal_pose), (0, 0.01), 1.0, value_at_margin=0.00000001)
 
-
+        self.total_reward = self.pose_reward  * self.ball_reward * self.ee_rew
 
         return self.total_reward
 

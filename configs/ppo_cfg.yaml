@@ -1,10 +1,10 @@
 
-  num_envs: 5
+  num_envs: 1
   # ent_coef: (float) Entropy coefficient for the loss calculation
   ent_coef: 0.01
   #gamma: (float) Discount factor
   total_timesteps: 300000000
-  validate_every_timesteps: 300000
+  validate_every_timesteps: 30000
   verbose: 1
   gamma: 0.99
   n_steps: 512  #16

@@ -39,7 +39,6 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     env = ur10svh(cur_dir+env_config_path,
                     resource_directory=cur_dir+"/rsc/ur10/",video_folder=video_folder)  # gym.make('CartPole-v1')
-    # env_cofig = load_yaml(cur_dir+env_config_path)
     c_models = \
     {
         "PPO"  : c_PPO (algo_config_path, env, video_folder),
