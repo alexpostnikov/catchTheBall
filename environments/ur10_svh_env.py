@@ -26,7 +26,7 @@ class ur10svh(ur10SvhBase):
         self.controllable_joints = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0]
         # MUST BE DONE FOR ALL ENVIRONMENTS
         self.update_cur = False
-        self.ob_dim = 62  # convention described on top
+        self.ob_dim = 62-11  # convention described on top
         self.action_dim = 15
         self.init_ora()
         self.curriculum_step = self.config["environment"]["curruclum"]["curruclum_step_init"]
@@ -134,8 +134,9 @@ class ur10svh(ur10SvhBase):
             raise
 
         if self.done:
-            self.ball_reward_buf.clear()
-            self.pose_reward_buf.clear()
+            if len(self.ball_reward_buf) > 600:
+                self.ball_reward_buf.clear()
+                self.pose_reward_buf.clear()
         return np.asarray(self.ob_scaled), self.total_reward, self.done, self.extra_info
 
     def update_observation(self):
@@ -158,7 +159,7 @@ class ur10svh(ur10SvhBase):
         counter += 3
         self.ob_double[counter:counter+3] = self.ball.velocity_scaled
         counter += 3
-        self.ob_double[counter:counter+11] = self.get_ball_collision()
+        # self.ob_double[counter:counter+11] = self.get_ball_collision()
         return self.ob_double
 
     def reset(self):
@@ -283,14 +284,14 @@ class ur10svh(ur10SvhBase):
             self.curriculum_step += 1
             self.pose_reward_buf.clear()
             self.update_cur_inner = False
-
-        try:
-            if ((sum(self.ball_reward_buf) / len(self.ball_reward_buf)) > 0.9) and ((sum(self.pose_reward_buf) / len(self.pose_reward_buf)) > 0.9):
-                if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
-                    self.update_cur_inner = True
-
-        except ZeroDivisionError:
-            pass
+        #
+        # try:
+        #     if ((sum(self.ball_reward_buf) / len(self.ball_reward_buf)) > 0.9) and ((sum(self.pose_reward_buf) / len(self.pose_reward_buf)) > 0.9):
+        #         if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
+        #             self.update_cur_inner = True
+        #
+        # except ZeroDivisionError:
+        #     pass
 
         return
 

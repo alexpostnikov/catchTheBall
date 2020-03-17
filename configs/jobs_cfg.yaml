@@ -1,7 +1,16 @@
 
-  num_jobs: 2
+  num_jobs: 8
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
+
+  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
+
+  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
+
+  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
 
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
   {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},

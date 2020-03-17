@@ -20,3 +20,6 @@
 
   #am: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator
   lam: 0.95
+
+
+  quality: 0.75

@@ -68,20 +68,20 @@ class c_class():
         self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=10, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
 
     def check_curriculum(self):
+        quality = self.algo_config["quality"]
         try:
             if isinstance(self.env, DummyVecEnv):
                 do_upd = True
                 for env in self.env.envs:
-                    if (env.pose_reward_averaged < 0.8) or (
-                            env.ball_reward_averaged < 0.8):
+                    if (env.pose_reward_averaged < quality) or (
+                            env.ball_reward_averaged < quality):
                         do_upd = False
                 if do_upd:
                     for env in self.env.envs:
                         env.update_cur = True
-
             else:
                 if self.env.update_cur_inner:
-                    if self.env.pose_reward_averaged > 0.8 and self.env.ball_reward_averaged > 0.8:
+                    if self.env.pose_reward_averaged > quality and self.env.ball_reward_averaged > quality:
                         self.env.update_cur = True
                     self.env.ball_reward_buf.clear()
                     self.env.pose_reward_buf.clear()
