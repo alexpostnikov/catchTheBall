@@ -6,7 +6,9 @@ Hp_log/
 Hp_log_big_PPO/
 Hp_log_big_TRPO/
 Hp_log_big1/
-
+.pytest_cache/
+__pycache__
+.idea
 log/
 video/
 weights/

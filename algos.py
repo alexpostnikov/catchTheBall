@@ -1,12 +1,16 @@
 from train_utils import  *
-from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize, SubprocVecEnv
 from stable_baselines import PPO2, TD3, TRPO, DDPG, GAIL
 from stable_baselines.common import set_global_seeds, make_vec_env
 
+from environments.multy_tread_env import RaisimGymVecEnv
 from stable_baselines.ddpg.policies import MlpPolicy as ddpgMlpPolicy
 from stable_baselines.td3.policies import  MlpPolicy as tf3MlpPolicy
 from stable_baselines.common.policies import MlpPolicy
 import tensorflow as tf
+from datetime import datetime
+import time
+
 
 class c_class():
     
@@ -20,6 +24,7 @@ class c_class():
         self.timestamp = 0
         self.save_model_flag = True
         self.ep_infos = None
+        self.saving_time = time.time()
 
     def __call__(self):
         raise NotImplementedError
@@ -31,7 +36,7 @@ class c_class():
         pose_rew = []
         ball_rew = []
         l = []
-        r=[]
+        r = []
         for i in range(5000):
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
@@ -44,6 +49,7 @@ class c_class():
                 r.append(info["episode"]["r"])
                 cur_step = info["episode"]["curriculum_step"]
         rew = sum(rew)/len(rew)
+
         rew = rew * (cur_step + 1) ### next curriculum -> better model apriory?
         self.ep_infos = {}
         self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
@@ -58,32 +64,63 @@ class c_class():
         return rew
 
     def learn(self):
-        print ("start learning!")
-        print (self.algo_config["total_timesteps"])
-        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=1000, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
+
+        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=10, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
+
+    def check_curriculum(self):
+        quality = self.algo_config["quality"]
+        try:
+            if isinstance(self.env, DummyVecEnv):
+                do_upd = True
+                for env in self.env.envs:
+                    if (env.pose_reward_averaged < quality) or (
+                            env.ball_reward_averaged < quality):
+                        do_upd = False
+                if do_upd:
+                    for env in self.env.envs:
+                        env.update_cur = True
+            else:
+                if self.env.update_cur_inner:
+                    if self.env.pose_reward_averaged > quality and self.env.ball_reward_averaged > quality:
+                        self.env.update_cur = True
+                    self.env.ball_reward_buf.clear()
+                    self.env.pose_reward_buf.clear()
+
+        except ZeroDivisionError:
+            print("zero division in check_curriculum!")
 
     def learning_callback(self,locals, globals):
-        # print ("inside callback")
-        # self.timestamp = locals["self"].num_timesteps
+
+        self.check_curriculum()
+
         if  locals["self"].num_timesteps - self.timestamp > self.algo_config["validate_every_timesteps"]:
             self.validate()
             self.timestamp = locals["self"].num_timesteps
 
         if self.save_model_flag == True:
             self.save_model_flag = False
-            locals["self"].save(self.video_folder+"best_model.pkl")
-        if self.ep_infos is not None:
-            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ep_len', simple_value = self.ep_infos["l"] )])
-            locals['writer'].add_summary(summary, locals["self"].num_timesteps)
-            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/pose_rew', simple_value=self.ep_infos["pose_rew"] )])
-            locals['writer'].add_summary(summary, self.timestamp)
-            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ball_rew', simple_value=self.ep_infos["ball_rew"] )])
-            locals['writer'].add_summary(summary, self.timestamp)
-            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/curriculum', simple_value=self.ep_infos["curriculum_step"] )])
-            locals['writer'].add_summary(summary, self.timestamp)
-            summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/final_reward', simple_value=self.ep_infos["r"] )])
-            locals['writer'].add_summary(summary, self.timestamp)
+            try:
+                locals["self"].save(self.video_folder+"best_model.pkl")
+            except:
+                pass
 
+        if time.time() - self.saving_time > 300:
+            self.saving_time = time.time()
+            locals["self"].save(self.video_folder + "model_"+datetime.now().strftime("%m_%d_%Y_%H:%M:%S")+".pkl")
+        try:
+            if self.ep_infos is not None:
+                summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ep_len', simple_value = self.ep_infos["l"] )])
+                locals['writer'].add_summary(summary, locals["self"].num_timesteps)
+                summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/pose_rew', simple_value=self.ep_infos["pose_rew"] )])
+                locals['writer'].add_summary(summary, self.timestamp)
+                summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/ball_rew', simple_value=self.ep_infos["ball_rew"] )])
+                locals['writer'].add_summary(summary, self.timestamp)
+                summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/curriculum', simple_value=self.ep_infos["curriculum_step"] )])
+                locals['writer'].add_summary(summary, self.timestamp)
+                summary = tf.Summary(value=[tf.Summary.Value(tag='episode_info/final_reward', simple_value=self.ep_infos["r"] )])
+                locals['writer'].add_summary(summary, self.timestamp)
+        except:
+            pass
 
 class c_PPO(c_class):
     
@@ -95,22 +132,29 @@ class c_PPO(c_class):
         self.timestamp = 0
         self.save_model_flag = True
         self.ep_infos = None
-        
-        
+
     def __call__(self):
         env_list = []
-        print ("self.algo_config[num_envs] ",self.algo_config["num_envs"])
+        print("self.algo_config[num_envs] ",self.algo_config["num_envs"])
+        # self.env = RaisimGymVecEnv(self.env, 10, 10)
         if self.algo_config["num_envs"] > 1:
-            for _ in range (self.algo_config["num_envs"]):
+            for _ in range(self.algo_config["num_envs"]):
                 env_list.append(self.env)
             self.env = DummyVecEnv(env_list)
         else:
             self.env = self.env
+
+
         self.algo = PPO2
-        self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"], verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder, policy_kwargs=dict(
-                    net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]], vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
-        
-        
+        if self.algo_config["nn_size"] != 0:
+            self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"], verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder, policy_kwargs=dict(
+                        net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]], vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+        else:
+            self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
+                                   verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],
+                                   gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder)
+                                   # gamma=self.algo_config["gamma"], tensorboard_log=None)
+
         return self
 
     def validate(self):
@@ -120,27 +164,58 @@ class c_PPO(c_class):
         pose_rew = []
         ball_rew = []
         l = []
+        r = []
+        cur_step = 0
         for i in range(5000):
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
-            if self.algo_config["num_envs"]> 1:
+
+            if isinstance(dones, np.ndarray):
+            # if self.algo_config["num_envs"]> 1:
                 is_done = any(dones) == True
             else:
                 is_done = dones
-            
+
             if is_done:
-                rew.append(info["episode"]["r"])
-                obs = self.env.reset()
-                pose_rew.append(info["episode"]["pose_rew"])
-                ball_rew.append(info["episode"]["ball_rew"])
-                l.append(info["episode"]["l"])
-                cur_step = info["episode"]["curriculum_step"]
+                if not isinstance(dones, np.ndarray):
+                # if self.algo_config["num_envs"] == 1:
+                    rew.append(info["episode"]["r"])
+
+                    pose_rew.append(info["episode"]["pose_rew"])
+                    ball_rew.append(info["episode"]["ball_rew"])
+                    l.append(info["episode"]["l"])
+                    cur_step = info["episode"]["curriculum_step"]
+                    obs = self.env.reset()
+                else:
+                # if self.algo_config["num_envs"] > 1:
+                    info = info[np.where(dones == True)[0][0]]
+                    rew.append(info["episode"]["r"])
+                    pose_rew.append(info["episode"]["pose_rew"])
+                    ball_rew.append(info["episode"]["ball_rew"])
+                    l.append(info["episode"]["l"])
+                    r.append(info["episode"]["r"])
+                    cur_step = info["episode"]["curriculum_step"]
+
+                    obs = self.env.reset()
+
         rew = sum(rew)/len(rew)
+        if rew > 0.2:
+            if isinstance(self.env, DummyVecEnv):
+                for env in self.env.envs:
+                    env.update_cur = True
+            else:
+                self.env.update_cur = True
         rew = rew * (cur_step + 1)  ### next curriculum -> better model apriory?
+
+
         self.ep_infos = {}
         self.ep_infos["ball_rew"] = sum(ball_rew)/len(ball_rew)
         self.ep_infos["pose_rew"] = sum(pose_rew)/len(pose_rew)
         self.ep_infos["l"] = sum(l)/len(l)
+        try:
+            self.ep_infos["r"] = sum(r) / len(r)
+        except ZeroDivisionError:
+            self.ep_infos["r"] = 0
         self.ep_infos["curriculum_step"] = cur_step
 
         if rew > self.best_mean_reward:
@@ -148,7 +223,6 @@ class c_PPO(c_class):
                 self.save_model_flag = True
 
         return rew
-
 
 
 class c_TRPO(c_class):
@@ -159,16 +233,17 @@ class c_TRPO(c_class):
         self.video_folder = video_folder
         self.env = env
         self.algo = TRPO
-        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"], 
-                              verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=video_folder,
-                              policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]], 
-                                                                vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+
 
         self.save_model_flag = True
         self.ep_infos = None
         self.timestamp = 0
         
     def __call__(self):
+        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"],
+                              verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=self.video_folder,
+                              policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
+                                                                vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
  
@@ -191,7 +266,6 @@ class c_DDPG(c_class):
     #         locals["self"].save(self.video_folder+"best_model.pkl")
 
 class c_TD3(c_class):
-
     def __init__(self,config, env, video_folder):
         super(c_TD3, self).__init__()
         self.algo_config = load_yaml(config)

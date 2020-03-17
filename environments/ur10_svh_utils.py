@@ -8,34 +8,32 @@ import raisimpy as raisim
 from datetime import datetime
 
 
-
 def applayMimic( ptarget, gc_dim=26, schunk_joint_offset = 6):
-    
-    # joint_indexes -= schunk_joint_offset
 
-    for joint in range(schunk_joint_offset,gc_dim):
-        if joint == 0+schunk_joint_offset: 
-            ptarget[joint+4] = ptarget[joint] #10
+    for joint in range(schunk_joint_offset, gc_dim):
+        if joint == 0 + schunk_joint_offset:
+            ptarget[joint+4] = ptarget[joint]  # 10
+
         if joint == 1+schunk_joint_offset:
-            ptarget[joint+1] = ptarget[joint] #8,9
+            ptarget[joint+1] = ptarget[joint]  # 8,9
             ptarget[joint+2] = ptarget[joint]
 
-        if joint == 5+schunk_joint_offset: #15,22
+        if joint == 5+schunk_joint_offset:  # 15,22
             ptarget[joint+4] = ptarget[joint]*0.5
             ptarget[joint+11] = ptarget[joint]*0.5
         
-        if joint == 6+schunk_joint_offset: #13,14
+        if joint == 6+schunk_joint_offset:  # 13,14
             ptarget[joint+1] = ptarget[joint]*1.3588
             ptarget[joint+2] = ptarget[joint]*1.42307
         
-        if joint == 10+schunk_joint_offset: #18,17
+        if joint == 10+schunk_joint_offset:  # 18,17
             ptarget[joint+1] = ptarget[joint]*1.3588
             ptarget[joint+2] = ptarget[joint]*1.42093
 
-        if joint == 14+schunk_joint_offset: #21
+        if joint == 14+schunk_joint_offset:  # 21
             ptarget[joint+1] = ptarget[joint]*1.0434
 
-        if joint == 18+schunk_joint_offset: #25
+        if joint == 18+schunk_joint_offset:  # 25
             ptarget[joint+1] = ptarget[joint]*1.0450
     return ptarget
 

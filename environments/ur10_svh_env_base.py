@@ -4,9 +4,10 @@ import gym
 from gym import spaces
 import yaml
 import numpy as np
+
 import raisimpy as raisim
 
-
+import collections
 
 # from raisimpy_gym.envs.vis_setup_callback import setup_callback
 from datetime import datetime
@@ -26,13 +27,14 @@ def normalize(array):
 
 
 def setup_callback():
+
     vis = raisim.OgreVis.get()
 
     # light
     light = vis.get_light()
     light.set_diffuse_color(1, 1, 1)
     light.set_cast_shadows(True)
-    light.set_direction(normalize([-3., -3., -0.5]))
+    light.set_direction(normalize([-2., -2., -0.5]))
     vis.set_camera_speed(300)
 
     # load textures
@@ -51,6 +53,8 @@ def setup_callback():
     vis.set_contact_visual_object_size(0.03, 0.2)
     # speed of camera motion in freelook mode
     vis.get_camera_man().set_top_speed(5)
+
+
 
 
 
@@ -89,14 +93,9 @@ def applayMimic( ptarget, gc_dim=26):
 
     return ptarget
 
-
-
-
 class ur10SvhBase(gym.Env):
     """Custom Environment that follows gym interface"""
-    # metadata = {'render.modes': ['human']}
-
-    def __init__(self, config, resource_directory,  video_folder=None):
+    def __init__(self, config, resource_directory,  video_folder=None, visualize=False):
         super(ur10SvhBase, self).__init__()
         self.already_closed = False
         self.resource_directory = resource_directory
@@ -111,8 +110,9 @@ class ur10SvhBase(gym.Env):
         elif not isinstance(config, dict):
             raise TypeError(
                 "Expecting the given 'config' argument to be dict or a str (path to the YAML file).")
+
         self.config = config
-        self.visualizable = self.config["environment"]["render"]
+        self.visualizable = (self.config["environment"]["render"] or visualize)
         # define other variables
 
         self.simulation_dt =  config["environment"]["simulation_dt"]#0.0025
@@ -133,26 +133,46 @@ class ur10SvhBase(gym.Env):
         self.world.set_time_step(self.simulation_dt)
         self.step_number = 0
         self.terminal_counter = 0
-        
+
+        self.vis_inited = False
         if self.visualizable:
-            vis = raisim.OgreVis.get()
-
-            vis.set_world(self.world)
-            vis.set_window_size(1280, 720)
-            vis.set_default_callbacks()
-            vis.set_setup_callback(setup_callback)
-            vis.set_anti_aliasing(2)
-            try:
-                vis.init_app()
-            except:
-                pass
-        # self.check_video_folder()
+            self.init_vis()
 
 
-    
+        self.total_reward = 0.
+        self.terminal_reward_coeff, self.done = 0., False
+        self.ob_double, self.ob_scaled = np.zeros(
+            self.ob_dim), np.zeros(self.ob_dim)
+        self.body_linear_vel, self.body_angular_vel = np.zeros(3), np.zeros(3)
+        self.buf_len = 1000000
+        self.reward_buff__ = collections.deque(maxlen=self.buf_len)
+        print (len(self.reward_buff__))
+
+        self.ball_reward_buf = []
+        self.pose_reward_buf = []
+
+
     def init_ora(self): # ora -> observation reward actions
         raise NotImplementedError
     
 
     def init_robot(self):
         raise NotImplementedError
+
+    def init_vis(self):
+        if not self.vis_inited:
+            self.vis_inited = True
+            vis = raisim.OgreVis.get()
+            self.vis = vis
+
+            vis.set_world(self.world)
+            vis.set_window_size(1280, 720)
+            vis.set_default_callbacks()
+
+            vis.set_setup_callback(setup_callback)
+            vis.set_anti_aliasing(2)
+            # vis.init_app()
+            self.vis = raisim.OgreVis.get()
+            self.vis.set_desired_fps(self.desired_fps)
+            self.vis.init_app()
+            # self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
