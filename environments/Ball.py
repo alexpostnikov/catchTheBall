@@ -3,7 +3,7 @@ import numpy as np
 
 class Ball:
     def __init__(self, world, vis, visualizable, config):
-        self.ball = world.add_sphere(radius=0.03, mass=0.03)
+        self.ball = world.add_sphere(radius=0.025, mass=0.03)
         # self.ball = world.add_sphere(radius=0.015, mass=0.03)
         # self.ballPose_init = [0.423301, 0.194859, 1.76 - 0.2]
         self.ballPose_init = np.array([0.383301, 0.154859, 1.76])
@@ -20,7 +20,8 @@ class Ball:
             self.disp = np.array(
                 self.config["environment"]["curruclum"]["ball_pose_disp_max"][curriculum_step]) - np.array(
                 self.config["environment"]["curruclum"]["ball_pose_disp_min"][curriculum_step])
-            self.disp = self.disp * (np.random.rand(3) - np.array([0.5, 0.5, 0.5]))
+            self.disp = self.disp * (np.random.rand(3)) +  np.array(
+                self.config["environment"]["curruclum"]["ball_pose_disp_min"][curriculum_step])
         self.ballPose = self.ballPose_init + self.disp
         self.ball.set_position(self.ballPose)
         self.ball.set_velocity(

@@ -114,8 +114,8 @@ if __name__ == "__main__":
 
   x = np.linspace(0, 2, 200)
 
-
-  plt.plot(x,tolerance(x, (0.0, 0.01), 1.0, value_at_margin=0.05))
+  y = tolerance(x, (0.0, 0.05), 0.15, value_at_margin=0.001)
+  plt.plot(x,y)
 
   plt.show()
   # print(tolerance(0.3,(0,0.1),0.3))

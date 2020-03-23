@@ -3,9 +3,9 @@
   ent_coef: 0.00
   #gamma: (float) Discount factor
   total_timesteps: 300000000
-  validate_every_timesteps: 3000
+  validate_every_timesteps: 30000
   gamma: 0.99
-  timesteps_per_batch: 1024
+  timesteps_per_batch: 64
   nn_size: 256
   learning_rate: 2.5e-4
   verbose: 1

@@ -79,12 +79,19 @@ class c_class():
                 if do_upd:
                     for env in self.env.envs:
                         env.update_cur = True
+                for env in self.env.envs:
+                    env.ball_reward_buf.clear()
+                    env.pose_reward_buf.clear()
+                    env.pose_reward_averaged = 0.
+                    env.ball_reward_averaged = 0.
             else:
-                if self.env.update_cur_inner:
+                # if self.env.update_cur_inner:
                     if self.env.pose_reward_averaged > quality and self.env.ball_reward_averaged > quality:
                         self.env.update_cur = True
                     self.env.ball_reward_buf.clear()
                     self.env.pose_reward_buf.clear()
+                    self.env.pose_reward_averaged = 0.
+                    self.env.ball_reward_averaged = 0.
 
         except ZeroDivisionError:
             print("zero division in check_curriculum!")
@@ -255,7 +262,7 @@ class c_DDPG(c_class):
         self.video_folder = video_folder
         self.algo = DDPG
         self.env = env
-        self.model = self.algo(ddpgMlpPolicy, env, verbose=1, tensorboard_log=video_folder)
+        self.model = self.algo(ddpgMlpPolicy, env, verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1), tensorboard_log=video_folder)
     
     def __call__(self):
         return self
@@ -272,7 +279,7 @@ class c_TD3(c_class):
         self.algo = TD3
         self.env = env
         self.video_folder = video_folder
-        self.model = self.algo(tf3MlpPolicy, env, verbose=1, tensorboard_log=video_folder)
+        self.model = self.algo(tf3MlpPolicy, env, verbose=1, tensorboard_log=video_folder, random_exploration = 0.02, learning_starts=10000, buffer_size=500000)
 
     
     def __call__(self):

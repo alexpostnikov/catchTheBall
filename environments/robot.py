@@ -98,16 +98,15 @@ class Robot:
 
         self.gc_init = np.array(
             INIT_POSES[0])
-        self.joint_p_gains = np.array([2000., 2000., 2000., 300., 200., 200., 60, 60, 60,
-                                       60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
-                                       60])
-        self.joint_p_gains[6:] *= 5
-        # self.joint_p_gains *= 0
-        # self.joint_p_gains +=
-        self.joint_d_gains = np.array([800., 800., 800., 200., 200., 40., 40, 40, 40,
-                                       40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40])
-        # self.joint_d_gains *= 0
-        # self.joint_d_gains += 1000
+        self.joint_p_gains = np.array([2000., 2000., 2000., 300., 200., 200., 600, 600, 600,
+                                       600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600,
+                                       600])
+
+        self.joint_p_gains[6:] /= 1.5
+        self.joint_d_gains = np.array([400., 400., 400., 200., 200., 100., 200, 200, 200,
+                                       200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200])
+
+        self.joint_d_gains[6:] /= 8.
 
         self.robot.set_pd_gains(self.joint_p_gains, self.joint_d_gains)
         self.robot.set_generalized_forces(np.zeros(self.gv_dim))
@@ -184,7 +183,7 @@ def HTM(i, theta):
     d2 = d3 = 0
     d4 = 0.163941
     d5 = 0.1157
-    d6 = 0.0922
+    d6 = 0.0922 + 0.1
 
     # a (unit: mm)
     a1 = a4 = a5 = a6 = 0

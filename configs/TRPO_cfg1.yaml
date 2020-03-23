@@ -5,7 +5,7 @@
   total_timesteps: 300000000
   validate_every_timesteps: 30000
   gamma: 0.99
-  timesteps_per_batch: 1024
+  timesteps_per_batch: 128
   nn_size: 256
   learning_rate: 2.5e-4
   verbose: 0
@@ -18,3 +18,4 @@
 
   #am: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator
   lam: 0.90
+  quality: 0.75
