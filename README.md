@@ -6,7 +6,7 @@
 * RaisimOGRE (https://github.com/leggedrobotics/raisimOgre)
 * **forked** raisimpy (https://github.com/alexpostnikov/raisimpy)
 * ffmpeg (video recording, for OgreVis::startRecordingVideo method. The install instruction can be found at https://tecadmin.net/install-ffmpeg-on-linux/)
-* stable-baselines (https://github.com/hill-a/stable-baselines)
+* stable-baselines (https://github.com/hill-a/stable-baselines) v. 2.9.0
 
 ### USAGE
 
