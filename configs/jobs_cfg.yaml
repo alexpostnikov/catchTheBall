@@ -2,9 +2,11 @@
   num_jobs: 4
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg2.yaml,     weight:  "/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/catchTheBall/log/PPO_1/model_04_27_2020_16:43:37.pkl"},
+
   {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
   {algo: PPO, algo_config_path: ./configs/ppo_cfg1.yaml,     weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg2.yaml,     weight:  None},
+  
   {algo: PPO, algo_config_path: ./configs/ppo_cfg3.yaml,     weight:  None},
   
   {algo: PPO, algo_config_path: ./configs/ppo_cfg1.yaml,     weight:  None},

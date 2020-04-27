@@ -157,7 +157,8 @@ class c_PPO(c_class):
             # self.env = DummyVecEnv(env_list)
             self.env = SubprocVecEnv(env_list, "fork")
         else:
-            self.env = self.env
+            # self.env = self.env
+            self.env = DummyVecEnv([self.env])
 
         self.algo = PPO2
         # self.model = self.algo(MlpLnLstmPolicy, self.env, n_steps=self.algo_config["n_steps"], nminibatches=1,
@@ -180,8 +181,8 @@ class c_PPO(c_class):
         r = []
         cur_step = 0
         for i in range(5000):
-            action, _states = self.model.predict([obs])
-            obs, rewards, dones, info = self.env.step(action[0])
+            action, _states = self.model.predict(obs)
+            obs, rewards, dones, info = self.env.step(action)
 
             if isinstance(dones, np.ndarray):
             # if self.algo_config["num_envs"]> 1:
