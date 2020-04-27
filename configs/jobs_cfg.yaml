@@ -2,7 +2,7 @@
   num_jobs: 4
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg2.yaml,     weight:  "/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/catchTheBall/log/PPO_1/model_04_27_2020_16:43:37.pkl"},
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg2.yaml,     weight:  None},
 
   {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
   {algo: PPO, algo_config_path: ./configs/ppo_cfg1.yaml,     weight:  None},
@@ -17,96 +17,14 @@
   {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},  
 
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,    weight:  None},  
-  
-
-  
-  
-  
-
-  
-  
-  
-  
   {algo: DDPG, algo_config_path: ./configs/ppo_cfg.yaml  ,  weight:  None},
-  
-  
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,    weight:  "/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/catchTheBall/log/TRPO_9/model_04_14_2020_17:31:07.pkl"},  
-  
-  
-  
-  
-  # {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  "/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/catchTheBall/log/TRPO_9/model_04_10_2020_00:09:02.pkl"},
-  
+  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,    weight:  "./log/TRPO_9/model_04_14_2020_17:31:07.pkl"},  
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg1.yaml,   weight:  None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg3.yaml,   weight:  None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg4.yaml,   weight:  None},
-  
-
-  
-  
   {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
   {algo: PPO, algo_config_path: ./configs/ppo_cfg1.yaml,     weight:  None},
-  
-  
   {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  
-
-
-  
-  
-
-
-
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
-
-
-
-
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  "/home/robot/repos/catchTheBall/log/model_03_19_2020_02:48:02.pkl"},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  "/home/robot/repos/catchTheBall/log/model_03_19_2020_21:25:35.pkl"},
-
-
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  "/home/robot/repos/catchTheBall/log/model_03_18_2020_13:22:37.pkl"},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  "/home/robot/repos/catchTheBall/log/model_03_18_2020_13:22:37.pkl"},
-
-
-
-
-
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-
-
-
-
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg2.yaml,  weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg3.yaml,  weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg4.yaml,  weight:  None},
-  {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
-  {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
-  {algo: TD3, algo_config_path: ./configs/ppo_cfg.yaml   ,  weight:  None},
-  
-  {algo: DDPG, algo_config_path: ./configs/ppo_cfg.yaml  ,  weight:  None},
-  {algo: DDPG, algo_config_path: ./configs/ppo_cfg.yaml  ,  weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg3.yaml,  weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg4.yaml,  weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg4.yaml,  weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg4.yaml,  weight:  None},
-
   ]
