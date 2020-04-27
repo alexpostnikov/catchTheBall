@@ -19,11 +19,8 @@ from stable_baselines import TD3
 import numpy as np
 
 
-best_mean_reward = -np.inf
-rsg_root = os.path.dirname(os.path.abspath(__file__)) + ''
-log_dir = rsg_root+"/logs/"
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
-config = load_yaml(cath_the_ball_dir+"/configs/ur10_cfg.yaml")
+# config = load_yaml(cath_the_ball_dir+"/configs/ur10_cfg.yaml")
 
 
 
@@ -31,7 +28,7 @@ if __name__ == "__main__":
 
     model_path = "best_model.pkl"
 
-    env = ur10svh(cur_dir+"/configs/ur10_cfg.yaml",
+    env = ur10svh(cur_dir+"/ur10_cfg.yaml",
                     resource_directory=cath_the_ball_dir+"/rsc/ur10/", visualize=True)
     model = TD3.load(model_path)
     env = DummyVecEnv([env])

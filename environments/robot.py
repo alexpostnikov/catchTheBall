@@ -66,12 +66,14 @@ class Robot:
                                          1.36, 1.49, 0.89, 1.35, 1.42, 0.30, 0.89, 1.34,
                                          1.46])
         self.index_in_world = None
-        obj_list = self.world.get_object_list()
-        self.world.integrate()
-        for index, object_ in enumerate(obj_list):
-            if object_ == self.robot:
-                self.index_in_world = index
-        del obj_list
+        
+        # self.world.integrate()
+        # obj_list = self.world.get_object_list()
+        
+        # for index, object_ in enumerate(obj_list):
+        #     if object_ == self.robot:
+        #         self.index_in_world = index
+        # del obj_list
 
     def transformAction(self, action):
         origin_maximum = self.maxJointsAngles
@@ -86,8 +88,15 @@ class Robot:
         self.robot = self.world.add_articulated_system(
             self.resource_directory + "ur10_s.urdf")
         self.robot.set_base_position(np.array([0., 0, .30]))
-        self.robot.set_control_mode(
-            raisim.ControlMode.PD_PLUS_FEEDFORWARD_TORQUE)
+        speed_control = self.config["environment"]["speed_control"]
+        if speed_control:
+            self.robot.set_control_mode(
+                # raisim.ControlMode.PD_PLUS_FEEDFORWARD_TORQUE)
+                raisim.ControlMode.VELOCITY_PLUS_FEEDFORWARD_TORQUE)            
+        else:
+            self.robot.set_control_mode(
+                raisim.ControlMode.PD_PLUS_FEEDFORWARD_TORQUE)
+
         self.ground = self.world.add_ground()
         self.world.set_erp(0., 0.)
         self.gc_dim = self.robot.get_generalized_coordinate_dim()
@@ -98,16 +107,15 @@ class Robot:
 
         self.gc_init = np.array(
             INIT_POSES[0])
-        self.joint_p_gains = np.array([2000., 2000., 2000., 300., 200., 200., 60, 60, 60,
-                                       60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
-                                       60])
-        self.joint_p_gains[6:] *= 5
-        # self.joint_p_gains *= 0
-        # self.joint_p_gains +=
-        self.joint_d_gains = np.array([800., 800., 800., 200., 200., 40., 40, 40, 40,
-                                       40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40])
-        # self.joint_d_gains *= 0
-        # self.joint_d_gains += 1000
+        self.joint_p_gains = np.array([2000., 2000., 2000., 300., 200., 200., 600, 600, 600,
+                                       600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600,
+                                       600])
+
+        self.joint_p_gains[6:] /= 1.5
+        self.joint_d_gains = np.array([400., 400., 400., 200., 200., 100., 200, 200, 200,
+                                       200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200])
+
+        self.joint_d_gains[6:] /= 8.
 
         self.robot.set_pd_gains(self.joint_p_gains, self.joint_d_gains)
         self.robot.set_generalized_forces(np.zeros(self.gv_dim))
@@ -184,7 +192,7 @@ def HTM(i, theta):
     d2 = d3 = 0
     d4 = 0.163941
     d5 = 0.1157
-    d6 = 0.0922
+    d6 = 0.0922 + 0.1
 
     # a (unit: mm)
     a1 = a4 = a5 = a6 = 0

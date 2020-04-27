@@ -15,8 +15,8 @@ def applayMimic( ptarget, gc_dim=26, schunk_joint_offset = 6):
             ptarget[joint+4] = ptarget[joint]  # 10
 
         if joint == 1+schunk_joint_offset:
-            ptarget[joint+1] = ptarget[joint]  # 8,9
-            ptarget[joint+2] = ptarget[joint]
+            ptarget[joint+1] = ptarget[joint]*1.01511  # 8,9
+            ptarget[joint+2] = ptarget[joint]*1.44889
 
         if joint == 5+schunk_joint_offset:  # 15,22
             ptarget[joint+4] = ptarget[joint]*0.5

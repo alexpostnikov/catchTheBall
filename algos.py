@@ -5,13 +5,16 @@ from stable_baselines.common import set_global_seeds, make_vec_env
 
 from environments.multy_tread_env import RaisimGymVecEnv
 from stable_baselines.ddpg.policies import MlpPolicy as ddpgMlpPolicy
+from stable_baselines.ddpg.policies import LnMlpPolicy as ddpgLnMlpPolicy
+
 from stable_baselines.td3.policies import  MlpPolicy as tf3MlpPolicy
-from stable_baselines.common.policies import MlpPolicy
+from stable_baselines.td3.policies import  LnMlpPolicy as tf3LnMlpPolicy
+from stable_baselines.common.policies import MlpPolicy, MlpLnLstmPolicy
 import tensorflow as tf
 from datetime import datetime
 import time
 
-
+set_global_seeds(1)
 class c_class():
     
     def __init__(self):
@@ -65,32 +68,43 @@ class c_class():
 
     def learn(self):
 
-        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=10, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
+        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=1000, tb_log_name="", callback=self.learning_callback) # 1 6000 000 ~1hr
 
     def check_curriculum(self):
         quality = self.algo_config["quality"]
+        if (isinstance(self.env, SubprocVecEnv)):
+            return
         try:
             if isinstance(self.env, DummyVecEnv):
-                do_upd = True
+                do_upd = False
                 for env in self.env.envs:
-                    if (env.pose_reward_averaged < quality) or (
-                            env.ball_reward_averaged < quality):
-                        do_upd = False
+                    if ((env.pose_reward_averaged > quality) and (
+                            env.ball_reward_averaged > quality))and (len(env.pose_reward_buf) >= env.buf_len ):
+                        do_upd = True
                 if do_upd:
                     for env in self.env.envs:
                         env.update_cur = True
+                # for env in self.env.envs:
+                        env.ball_reward_buf.clear()
+                        env.pose_reward_buf.clear()
+                        env.pose_reward_averaged = 0.
+                        env.ball_reward_averaged = 0.
             else:
-                if self.env.update_cur_inner:
-                    if self.env.pose_reward_averaged > quality and self.env.ball_reward_averaged > quality:
+                # if self.env.update_cur_inner:
+                    if (self.env.pose_reward_averaged > quality and self.env.ball_reward_averaged > quality)   \
+                            and len(self.env.pose_reward_buf) >= self.env.buf_len:
                         self.env.update_cur = True
-                    self.env.ball_reward_buf.clear()
-                    self.env.pose_reward_buf.clear()
+                        self.env.ball_reward_buf.clear()
+                        self.env.pose_reward_buf.clear()
+                        self.env.pose_reward_averaged = 0.
+                        self.env.ball_reward_averaged = 0.
 
         except ZeroDivisionError:
             print("zero division in check_curriculum!")
 
     def learning_callback(self,locals, globals):
 
+        # locals["self"].vf_stepsize = np.clip(np.random.normal(0.0003, 0.0003), 0.0001,0.001)
         self.check_curriculum()
 
         if  locals["self"].num_timesteps - self.timestamp > self.algo_config["validate_every_timesteps"]:
@@ -104,7 +118,7 @@ class c_class():
             except:
                 pass
 
-        if time.time() - self.saving_time > 300:
+        if time.time() - self.saving_time > 600:
             self.saving_time = time.time()
             locals["self"].save(self.video_folder + "model_"+datetime.now().strftime("%m_%d_%Y_%H:%M:%S")+".pkl")
         try:
@@ -123,7 +137,7 @@ class c_class():
             pass
 
 class c_PPO(c_class):
-    
+
     def __init__(self,config, env, video_folder):
         super(c_PPO, self).__init__()
         self.algo_config = load_yaml(config)
@@ -140,21 +154,21 @@ class c_PPO(c_class):
         if self.algo_config["num_envs"] > 1:
             for _ in range(self.algo_config["num_envs"]):
                 env_list.append(self.env)
-            self.env = DummyVecEnv(env_list)
+            # self.env = DummyVecEnv(env_list)
+            self.env = SubprocVecEnv(env_list, "fork")
         else:
-            self.env = self.env
-
+            # self.env = self.env
+            self.env = DummyVecEnv([self.env])
 
         self.algo = PPO2
-        if self.algo_config["nn_size"] != 0:
-            self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"], verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder, policy_kwargs=dict(
-                        net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]], vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
-        else:
-            self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
-                                   verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],
-                                   gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder)
-                                   # gamma=self.algo_config["gamma"], tensorboard_log=None)
-
+        # self.model = self.algo(MlpLnLstmPolicy, self.env, n_steps=self.algo_config["n_steps"], nminibatches=1,
+        #                         verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],learning_rate=self.algo_config["learning_rate"],
+        #                         gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder)
+        self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
+                                verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],learning_rate=self.algo_config["learning_rate"],
+                                gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder,
+                                policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"],
+                                    self.algo_config["nn_size"]], vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
     def validate(self):
@@ -163,7 +177,7 @@ class c_PPO(c_class):
         rew = []
         pose_rew = []
         ball_rew = []
-        l = []
+        l = []  
         r = []
         cur_step = 0
         for i in range(5000):
@@ -198,14 +212,7 @@ class c_PPO(c_class):
 
                     obs = self.env.reset()
 
-        rew = sum(rew)/len(rew)
-        if rew > 0.2:
-            if isinstance(self.env, DummyVecEnv):
-                for env in self.env.envs:
-                    env.update_cur = True
-            else:
-                self.env.update_cur = True
-        rew = rew * (cur_step + 1)  ### next curriculum -> better model apriory?
+        # rew = rew * (cur_step + 1)  ### next curriculum -> better model apriory?
 
 
         self.ep_infos = {}
@@ -218,9 +225,9 @@ class c_PPO(c_class):
             self.ep_infos["r"] = 0
         self.ep_infos["curriculum_step"] = cur_step
 
-        if rew > self.best_mean_reward:
-                self.best_mean_reward = rew
-                self.save_model_flag = True
+        # if rew > self.best_mean_reward:
+        #         self.best_mean_reward = rew
+        #         self.save_model_flag = True
 
         return rew
 
@@ -233,14 +240,13 @@ class c_TRPO(c_class):
         self.video_folder = video_folder
         self.env = env
         self.algo = TRPO
-
-
         self.save_model_flag = True
         self.ep_infos = None
         self.timestamp = 0
         
     def __call__(self):
-        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"],
+        env_list = []
+        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"], vf_stepsize =self.algo_config["learning_rate"],
                               verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=self.video_folder,
                               policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
                                                                 vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
@@ -253,17 +259,12 @@ class c_DDPG(c_class):
         super(c_DDPG, self).__init__()
         self.algo_config = load_yaml(config)
         self.video_folder = video_folder
-        self.algo = DDPG
         self.env = env
-        self.model = self.algo(ddpgMlpPolicy, env, verbose=1, tensorboard_log=video_folder)
     
     def __call__(self):
+        self.algo = DDPG
+        self.model = self.algo(ddpgLnMlpPolicy, self.env, tensorboard_log=self.video_folder)#, verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
         return self
-
-    # def learning_callback(self,locals, globals):
-    #     if locals["episode_reward"] > self.best_mean_reward:
-    #         self.best_mean_reward = locals["episode_reward"]
-    #         locals["self"].save(self.video_folder+"best_model.pkl")
 
 class c_TD3(c_class):
     def __init__(self,config, env, video_folder):
@@ -272,10 +273,12 @@ class c_TD3(c_class):
         self.algo = TD3
         self.env = env
         self.video_folder = video_folder
-        self.model = self.algo(tf3MlpPolicy, env, verbose=1, tensorboard_log=video_folder)
+        
 
     
     def __call__(self):
+        
+        self.model = self.algo(tf3LnMlpPolicy, self.env, verbose=1, tensorboard_log=self.video_folder)#, random_exploration = 0.00, learning_starts=1000, buffer_size=5000)
         return self
 
     # def learning_callback(self,locals, globals):
