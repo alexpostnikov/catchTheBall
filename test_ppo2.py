@@ -31,7 +31,7 @@ if __name__ == "__main__":
     model_path = "best_model.pkl"
     # if not os.path.isdir("video_test/"):
     #     os.mkdir("video_test/")
-    env = ur10svh(cur_dir+"/configs/ur10_cfg.yaml",
+    env = ur10svh(cur_dir+"/ur10_cfg.yaml",
                     resource_directory=cath_the_ball_dir+"/rsc/ur10/", visualize=True)
 
     model = PPO2.load(model_path)

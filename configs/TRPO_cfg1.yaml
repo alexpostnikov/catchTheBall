@@ -7,7 +7,7 @@
   gamma: 0.99
   timesteps_per_batch: 128
   nn_size: 256
-  learning_rate: 2.5e-4
+  learning_rate: 1.e-3
   verbose: 0
 
   #vf_coef: (float) Value function coefficient for the loss calculation

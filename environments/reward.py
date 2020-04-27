@@ -113,11 +113,13 @@ if __name__ == "__main__":
   import matplotlib.pyplot as plt
 
   x = np.linspace(0, 2, 200)
+  # tolerance(np.linalg.norm(self.ee_goal - self.goal_pose), (0, 0.01), 0.5, value_at_margin=0.00000001)
+  y = tolerance(x, (0, 0.01), 1.0, value_at_margin=0.0000001)
 
-  y = tolerance(x, (0.0, 0.05), 0.15, value_at_margin=0.001)
   plt.plot(x,y)
 
   plt.show()
+
   # print(tolerance(0.3,(0,0.1),0.3))
   #
   # print(tolerance(0.3,(0,0.2),0.3))

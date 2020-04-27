@@ -66,12 +66,14 @@ class Robot:
                                          1.36, 1.49, 0.89, 1.35, 1.42, 0.30, 0.89, 1.34,
                                          1.46])
         self.index_in_world = None
-        obj_list = self.world.get_object_list()
-        self.world.integrate()
-        for index, object_ in enumerate(obj_list):
-            if object_ == self.robot:
-                self.index_in_world = index
-        del obj_list
+        
+        # self.world.integrate()
+        # obj_list = self.world.get_object_list()
+        
+        # for index, object_ in enumerate(obj_list):
+        #     if object_ == self.robot:
+        #         self.index_in_world = index
+        # del obj_list
 
     def transformAction(self, action):
         origin_maximum = self.maxJointsAngles
@@ -86,8 +88,15 @@ class Robot:
         self.robot = self.world.add_articulated_system(
             self.resource_directory + "ur10_s.urdf")
         self.robot.set_base_position(np.array([0., 0, .30]))
-        self.robot.set_control_mode(
-            raisim.ControlMode.PD_PLUS_FEEDFORWARD_TORQUE)
+        speed_control = self.config["environment"]["speed_control"]
+        if speed_control:
+            self.robot.set_control_mode(
+                # raisim.ControlMode.PD_PLUS_FEEDFORWARD_TORQUE)
+                raisim.ControlMode.VELOCITY_PLUS_FEEDFORWARD_TORQUE)            
+        else:
+            self.robot.set_control_mode(
+                raisim.ControlMode.PD_PLUS_FEEDFORWARD_TORQUE)
+
         self.ground = self.world.add_ground()
         self.world.set_erp(0., 0.)
         self.gc_dim = self.robot.get_generalized_coordinate_dim()
