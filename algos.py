@@ -165,11 +165,11 @@ class c_PPO(c_class):
             self.env = DummyVecEnv([self.env])
 
         self.algo = PPO2
-        self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
-                                verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],learning_rate=self.algo_config["learning_rate"],
-                                gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder,
-                                policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"],
-                                    self.algo_config["nn_size"]], vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+        self.model = self.algo(MlpPolicy, self.env, verbose=self.algo_config["verbose"],tensorboard_log=self.video_folder)
+                                # , n_steps=self.algo_config["n_steps"], ent_coef=self.algo_config["ent_coef"],learning_rate=self.algo_config["learning_rate"],
+                                # gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder,
+                                # policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"],
+                                #     self.algo_config["nn_size"]], vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
     def validate(self):
@@ -247,10 +247,11 @@ class c_TRPO(c_class):
         
     def __call__(self):
         env_list = []
-        self.model = self.algo(MlpPolicy, self.env ,gamma=self.algo_config["gamma"], vf_stepsize =self.algo_config["learning_rate"],
-                              verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=self.video_folder,
-                              policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
-                                                                vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+        self.model = self.algo(MlpPolicy, self.env,tensorboard_log=self.video_folder)
+        #  ,gamma=self.algo_config["gamma"], vf_stepsize =self.algo_config["learning_rate"],
+        #                       verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=self.video_folder,
+        #                       policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
+        #                                                         vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
  
@@ -264,7 +265,7 @@ class c_DDPG(c_class):
     
     def __call__(self):
         self.algo = DDPG
-        self.model = self.algo(ddpgLnMlpPolicy, self.env, tensorboard_log=self.video_folder)#, verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
+        self.model = self.algo(ddpgMlpPolicy, self.env, tensorboard_log=self.video_folder)#, verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
         return self
 
 class c_TD3(c_class):
@@ -278,8 +279,7 @@ class c_TD3(c_class):
 
     
     def __call__(self):
-        
-        self.model = self.algo(tf3LnMlpPolicy, self.env, verbose=1, tensorboard_log=self.video_folder)#, random_exploration = 0.00, learning_starts=1000, buffer_size=5000)
+        self.model = self.algo(tf3MlpPolicy, self.env, verbose=1, tensorboard_log=self.video_folder)#, random_exploration = 0.00, learning_starts=1000, buffer_size=5000)
         return self
 
     # def learning_callback(self,locals, globals):

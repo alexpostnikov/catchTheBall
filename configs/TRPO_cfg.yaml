@@ -2,7 +2,7 @@
   # ent_coef: (float) Entropy coefficint for the loss calculation
   ent_coef: 0.00
   #gamma: (float) Discount factor
-  total_timesteps: 300000000
+  total_timesteps: 10000000
   validate_every_timesteps: 10000
   gamma: 0.99
   timesteps_per_batch: 16
