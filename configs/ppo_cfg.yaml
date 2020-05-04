@@ -1,24 +1,18 @@
 
   num_envs: 1
-  # ent_coef: (float) Entropy coefficient for the loss calculation
-  ent_coef: 0.00
-  #gamma: (float) Discount factor
+  
+  ent_coef: 0.00 # ent_coef: (float) Entropy coefficient for the loss calculation
+  
   total_timesteps: 13000000
   validate_every_timesteps: 30000
   verbose: 1
-  gamma: 0.99
-  n_steps: 256  #16
-  nn_size: 64 # if 0 - use default values
-  #128
-  learning_rate: 2.5e-4
-
-  #vf_coef: (float) Value function coefficient for the loss calculation
-  vf_coef: 0.5
-
-  #max_grad_norm: (float) The maximum value for the gradient clipping
-  max_grad_norm: 0.5
-
-  #am: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator
-  lam: 0.95
-
+  gamma: 0.99 #gamma: (float) Discount factor
+  n_steps: 1024  #16
+  nn_size: 64 
+  learning_rate: 5.e-4
+  
+  vf_coef: 0.50  #Value function coefficient for the loss calculation
+  
+  max_grad_norm: 0.5 #The maximum value for the gradient clipping
+  lam: 0.95 # Factor for trade-off of bias vs variance for Generalized Advantage Estimator
   quality: 0.85
