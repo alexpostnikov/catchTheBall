@@ -151,7 +151,7 @@ class c_PPO(c_class):
         self.timestamp = 0
         self.save_model_flag = True
         self.ep_infos = None
-        self.set_algo_params()
+        
 
     def set_algo_params(self):
         self.n_steps = self.algo_config["n_steps"]
@@ -160,7 +160,7 @@ class c_PPO(c_class):
         self.gamma = self.algo_config["gamma"]
         self.policy_kwargs = dict(net_arch=[dict(pi=[self.algo_config["nn_size"],
                                                      self.algo_config["nn_size"]],
-                                                 vf=[self.algo_config["nn_size"], 
+                                                 vf=[self.algo_config["nn_size"],
                                                      self.algo_config["nn_size"]])])
 
     def __call__(self):
@@ -241,15 +241,25 @@ class c_TRPO(c_class):
         self.save_model_flag = True
         self.ep_infos = None
         self.timestamp = 0
+        
+
+    def set_algo_params(self):
+        self.timesteps_per_batch = self.algo_config["total_timesteps"]
+        self.ent_coef = self.algo_config["ent_coef"]
+        self.vf_stepsize = self.algo_config["learning_rate"]
+        self.gamma = self.algo_config["gamma"]
+        self.policy_kwargs = dict(net_arch=[dict(pi=[self.algo_config["nn_size"],
+                                                     self.algo_config["nn_size"]],
+                                                 vf=[self.algo_config["nn_size"],
+                                                     self.algo_config["nn_size"]])])
 
     def __call__(self):
-        env_list = []
         self.model = self.algo(MlpPolicy, self.env,
-                               tensorboard_log=self.video_folder)
-        #  ,gamma=self.algo_config["gamma"], vf_stepsize =self.algo_config["learning_rate"],
-        #                       verbose=self.algo_config["verbose"], entcoeff=self.algo_config["ent_coef"], tensorboard_log=self.video_folder,
-        #                       policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
-        #                                                         vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+                               tensorboard_log=self.video_folder, timesteps_per_batch=self.timesteps_per_batch,
+                               gamma=self.gamma, vf_stepsize=self.vf_stepsize,
+                               verbose=self.algo_config["verbose"], entcoeff=self.ent_coef,
+                               policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
+                                                                 vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
 

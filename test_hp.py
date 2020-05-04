@@ -71,7 +71,8 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight):
 				"DDPG": cur_dir+"/test_ddpg.py",
 				"TD3":  cur_dir+"/test_TD3.py"
 			}
-
+		
+		c_models[ALGO].set_algo_params()
 		c_model = c_models[ALGO]()
 		if (str(weight) != "None"):
 			c_model.model = algos[ALGO].load(weight, c_model.env)
@@ -84,7 +85,7 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight):
 		shutil.copytree(cur_dir + "/environments/",
 						video_folder+"/environments/")
 		shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
-
+		c_model.set_algo_params()
 		c_model.gamma = gamma
 		c_model.lr = lr
 		c_model.n_steps = tpb
