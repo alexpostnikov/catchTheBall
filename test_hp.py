@@ -1,77 +1,121 @@
+
 import os
 import sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-import tensorflow as tf
-from tensorboard.plugins.hparams import api as hp
-from stable_baselines import PPO2, TD3, TRPO, DDPG, GAIL
+try:
+	sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+except:
+	pass
 
-from train_utils import check_video_folder
 from environments.ur10_svh_env import ur10svh
+
 from stable_baselines.common.policies import MlpPolicy
+from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines.common.vec_env import SubprocVecEnv
+from stable_baselines import PPO2, TD3, TRPO, DDPG, GAIL
+from stable_baselines.common import set_global_seeds, make_vec_env
+from train_utils import *
+from stable_baselines.ddpg.policies import MlpPolicy as ddpgMlpPolicy
+from stable_baselines.td3.policies import MlpPolicy as tf3MlpPolicy
+import argparse
+from algos import c_DDPG, c_PPO, c_TD3, c_TRPO
 
-from tensorboardX import SummaryWriter
-import time
+import gym
+from multiprocessing import Process
+import shutil
 
-HP_timesteps_per_batch = hp.HParam('timesteps_per_batch', hp.Discrete([1024, 512, 248, 2048]))
-HP_GAMMA = hp.HParam('gamma', hp.RealInterval(0.8,0.99))
-HP_entcoeff = hp.HParam('entcoeff', hp.RealInterval(0.0, 0.05))
+algos = \
+	{
+		"PPO": PPO2,
+		"TRPO": TRPO,
+		"DDPG": DDPG,
+		"TD3": TD3
 
-HP_timesteps_per_batch = [1024, 512, 248, 2048]
-HP_GAMMA = [0.8,0.9,0.99]
-HP_entcoeff = [0.0,0.01]
-
-
-METRIC_ACCURACY = 'accuracy'
+	}
 
 
-session_num = 0
+def yield_params():
+	for lr in [1.0e-4, 2.5e-4, 5.0e-4]:
+		for timesteps_per_batch in [1024, 512, 2048]:
+			for gamma in [0.8, 0.9, 0.99]:
+				for ent in [0.0, 0.01]:
+					yield (lr, timesteps_per_batch, gamma, ent)
 
-with SummaryWriter("Hp_log_big_TRPO") as w:
-	for timesteps_per_batch in HP_timesteps_per_batch:
-		for GAMMA in HP_GAMMA:
-			for entcoeff in HP_entcoeff:
-				name = "t" + str(timesteps_per_batch) + "G"+ str(GAMMA)[0:5] + "e" + str(entcoeff)[0:4]
-				step = 0 
-				for i in range(50):
-					start_time = time.time()
 
-					if step == 0:
-						cur_dir = os.path.dirname(os.path.abspath(__file__))
-						video_folder = check_video_folder(cur_dir+"/video/"+"TRPO")
-						video_folder = video_folder+"/"
-						env = ur10svh(cur_dir+"/environments/ur10_cfg.yaml",
-									resource_directory="/media/robot/a8dd218a-4279-4bd4-b6af-8230c48776f7/iskander/schunk_gym/rsc/ur10/",video_folder=video_folder)  # gym.make('CartPole-v1')
+cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
-						model = TRPO(MlpPolicy, env, gamma=GAMMA,timesteps_per_batch=timesteps_per_batch, entcoeff=entcoeff, verbose=0, tensorboard_log=video_folder)
-						
-					model.learn(total_timesteps=60000, tb_log_name="") # 1 6000 000 ~1hr
-					model.save(video_folder+"session_num"+str(session_num)+"_step_"+str(step)+".pkl")
-					session_num += 1
-					
-					# VALIDATION
-					obs = env.reset()
-					obs = env.reset()
-					rew = []
-					
-					for i in range(1000):
-						action, _states = model.predict(obs)
-						obs, rewards, dones, info = env.step(action)
-						if dones == True:
-							rew.append(info["episode"]["l"])
-							obs = env.reset()
-					rew = sum(rew)/len(rew)
-					hparams = {
-						"HP_timesteps_per_batch": timesteps_per_batch,
-						"HP_GAMMA": GAMMA,
-						"HP_entcoeff": entcoeff,
-					}
-					step += 60000
-					w.add_hparams(hparams, {'hparam/av_len': rew},name = name, global_step=step)
-					
-					print (hparams)
-					print (rew)
-					print ("done in ", time.time() - start_time)
-					print ("-----------------------------")
 
-				
+def run_learning(ALGO, env_config_path, algo_config_path, weight):
+	cur_dir = os.path.dirname(os.path.abspath(__file__))
+	for lr, tpb, gamma, ent in yield_params():
+		print ("starting: " + ALGO+"_lr_"+str(
+			lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(ent))
+		video_folder = check_video_folder(cur_dir+"/log/")
+		video_folder = check_video_folder(cur_dir+"/log/"+ALGO+"_lr_"+str(
+			lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(ent))
+		video_folder = video_folder+"/"
 		
+		env = ur10svh(cur_dir+env_config_path,
+					  resource_directory=cur_dir+"/rsc/ur10/", video_folder=video_folder)  # gym.make('CartPole-v1')
+		c_models = \
+			{
+				"PPO": c_PPO(algo_config_path, env, video_folder),
+				"TRPO": c_TRPO(algo_config_path, env, video_folder),
+				"DDPG": c_DDPG(algo_config_path, env, video_folder),
+				"TD3": c_TD3(algo_config_path, env, video_folder)
+			}
+
+		runner =\
+			{
+				"PPO":  cur_dir+"/test_ppo2.py",
+				"TRPO": cur_dir+"/test_trpo.py",
+				"DDPG": cur_dir+"/test_ddpg.py",
+				"TD3":  cur_dir+"/test_TD3.py"
+			}
+
+		c_model = c_models[ALGO]()
+		if (str(weight) != "None"):
+			c_model.model = algos[ALGO].load(weight, c_model.env)
+			c_model.model.tensorboard_log = video_folder
+
+		### copy env and configs file to log folder ###
+		shutil.copy2(algo_config_path, video_folder)
+		shutil.copy2(cur_dir + env_config_path, video_folder)
+		shutil.copy2(runner[ALGO], video_folder)
+		shutil.copytree(cur_dir + "/environments/",
+						video_folder+"/environments/")
+		shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
+
+		c_model.gamma = gamma
+		c_model.lr = lr
+		c_model.n_steps = tpb
+		c_model.ent_coef = ent
+
+		c_model.learn()
+		c_model.model.save(video_folder+"model.pkl")
+		c_model.validate()
+
+
+if __name__ == "__main__":
+
+	parser = argparse.ArgumentParser(description='Process some integers.')
+	parser.add_argument('--jobs_config_path', type=str, default="./configs/jobs_cfg.yaml",
+						help='path to config file')
+	args = parser.parse_args()
+	jobs_config = load_yaml(args.jobs_config_path)
+	env_config_path = jobs_config["env_config_path"]
+	cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
+	processes = []
+	for i in range(0, jobs_config["num_jobs"]):
+		ALGO = jobs_config["jobs"][i]["algo"]
+		weight = jobs_config["jobs"][i]["weight"]
+		algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
+
+		p = Process(target=run_learning, args=(
+			ALGO, env_config_path, algo_config_path, weight))
+		processes.append(p)
+		p.start()
+
+	for p in processes:
+		p.join()
+
+	print("done")
