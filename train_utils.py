@@ -24,3 +24,13 @@ def check_video_folder(video_folder):
                 video_folder = folder_name
                 return video_folder
     return video_folder
+
+
+class my_scheduller():
+        def __init__(self,init_p,final_p):
+            self.init_p = init_p
+            self.final_p = final_p
+        
+        def __call__(self, progress = 0):
+            value = self.init_p +  (1 - progress)*(self.final_p-self.init_p)
+            return value

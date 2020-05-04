@@ -136,8 +136,10 @@ class c_class():
         except:
             pass
 
-class c_PPO(c_class):
 
+
+class c_PPO(c_class):
+    
     def __init__(self,config, env, video_folder):
         super(c_PPO, self).__init__()
         self.algo_config = load_yaml(config)
@@ -146,6 +148,8 @@ class c_PPO(c_class):
         self.timestamp = 0
         self.save_model_flag = True
         self.ep_infos = None
+
+
 
     def __call__(self):
         env_list = []
@@ -161,9 +165,6 @@ class c_PPO(c_class):
             self.env = DummyVecEnv([self.env])
 
         self.algo = PPO2
-        # self.model = self.algo(MlpLnLstmPolicy, self.env, n_steps=self.algo_config["n_steps"], nminibatches=1,
-        #                         verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],learning_rate=self.algo_config["learning_rate"],
-        #                         gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder)
         self.model = self.algo(MlpPolicy, self.env, n_steps=self.algo_config["n_steps"],
                                 verbose=self.algo_config["verbose"], ent_coef=self.algo_config["ent_coef"],learning_rate=self.algo_config["learning_rate"],
                                 gamma=self.algo_config["gamma"], tensorboard_log=self.video_folder,

@@ -18,7 +18,7 @@ from stable_baselines.ddpg.policies import MlpPolicy as ddpgMlpPolicy
 from stable_baselines.td3.policies import  MlpPolicy as tf3MlpPolicy
 import argparse
 from algos import c_DDPG, c_PPO, c_TD3, c_TRPO
-import tensorflow as tf
+
 import gym
 from multiprocessing import Process
 import shutil
