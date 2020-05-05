@@ -244,7 +244,7 @@ class c_TRPO(c_class):
         
 
     def set_algo_params(self):
-        self.timesteps_per_batch = self.algo_config["total_timesteps"]
+        self.timesteps_per_batch = self.algo_config["timesteps_per_batch"]
         self.ent_coef = self.algo_config["ent_coef"]
         self.vf_stepsize = self.algo_config["learning_rate"]
         self.gamma = self.algo_config["gamma"]

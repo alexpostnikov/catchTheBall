@@ -72,7 +72,12 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight):
 				"TD3":  cur_dir+"/test_TD3.py"
 			}
 		
+
 		c_models[ALGO].set_algo_params()
+		c_models[ALGO].gamma = gamma
+		c_models[ALGO].vf_stepsize = lr
+		c_models[ALGO].timesteps_per_batch = tpb
+		c_models[ALGO].ent_coef = ent
 		c_model = c_models[ALGO]()
 		if (str(weight) != "None"):
 			c_model.model = algos[ALGO].load(weight, c_model.env)
@@ -85,11 +90,7 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight):
 		shutil.copytree(cur_dir + "/environments/",
 						video_folder+"/environments/")
 		shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
-		c_model.set_algo_params()
-		c_model.gamma = gamma
-		c_model.lr = lr
-		c_model.n_steps = tpb
-		c_model.ent_coef = ent
+		
 
 		c_model.learn()
 		c_model.model.save(video_folder+"model.pkl")
