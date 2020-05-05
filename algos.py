@@ -272,7 +272,7 @@ class c_DDPG(c_class):
         self.env = env
 
     def set_algo_params(self):
-        self.policy = ddpgMlpPolicy
+        self.policy = ddpgLnMlpPolicy
         self.tau = self.algo_config["tau"]
         self.batch_size = self.algo_config["timesteps_per_batch"]
         self.ent_coef = self.algo_config["ent_coef"]
