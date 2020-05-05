@@ -34,24 +34,23 @@ algos = \
 
 
 def yield_params():
-	for lr in [1.0e-4, 2.5e-4, 5.0e-4]:
-		for timesteps_per_batch in [1024, 512, 2048]:
-			for gamma in [0.8, 0.9, 0.99]:
-				for ent in [0.0, 0.01]:
-					yield (lr, timesteps_per_batch, gamma, ent)
-
+	for ac_lr in [1.0e-4, 2.5e-4]:
+		for crit_lr in [1.0e-3, 2.5e-3]:
+			for timesteps_per_batch in [256, 512]:
+				for gamma in [0.8,  0.99]:
+					for tau in [0.002, 0.001]:
+						yield (ac_lr, crit_lr, timesteps_per_batch, gamma, tau)
 
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
-
 def run_learning(ALGO, env_config_path, algo_config_path, weight):
 	cur_dir = os.path.dirname(os.path.abspath(__file__))
-	for lr, tpb, gamma, ent in yield_params():
+	for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
 		print ("starting: " + ALGO+"_lr_"+str(
-			lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(ent))
+			ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 		video_folder = check_video_folder(cur_dir+"/log/")
 		video_folder = check_video_folder(cur_dir+"/log/"+ALGO+"_lr_"+str(
-			lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(ent))
+			ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 		video_folder = video_folder+"/"
 		
 		env = ur10svh(cur_dir+env_config_path,
@@ -71,13 +70,13 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight):
 				"DDPG": cur_dir+"/test_ddpg.py",
 				"TD3":  cur_dir+"/test_TD3.py"
 			}
-		
 
 		c_models[ALGO].set_algo_params()
 		c_models[ALGO].gamma = gamma
-		c_models[ALGO].vf_stepsize = lr
-		c_models[ALGO].timesteps_per_batch = tpb
-		c_models[ALGO].ent_coef = ent
+		c_models[ALGO].critic_lr = cr_lr
+		c_models[ALGO].actor_lr = ac_lr
+		c_models[ALGO].batch_size = tpb
+		c_models[ALGO].tau = tau
 		c_model = c_models[ALGO]()
 		if (str(weight) != "None"):
 			c_model.model = algos[ALGO].load(weight, c_model.env)

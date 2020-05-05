@@ -271,6 +271,17 @@ class c_DDPG(c_class):
         self.video_folder = video_folder
         self.env = env
 
+    def set_algo_params(self):
+        self.policy = ddpgMlpPolicy
+        self.tau = self.algo_config["tau"]
+        self.batch_size = self.algo_config["timesteps_per_batch"]
+        self.ent_coef = self.algo_config["ent_coef"]
+        self.actor_lr = self.algo_config["actor_lr"]
+        self.critic_lr = self.algo_config["critic_lr"]
+        self.gamma = self.algo_config["gamma"]
+        self.observation_range = (-1,1)
+        self.return_range = (-1,1)
+
     def __call__(self):
         self.algo = DDPG
         # , verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
