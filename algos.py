@@ -285,8 +285,10 @@ class c_DDPG(c_class):
     def __call__(self):
         self.algo = DDPG
         # , verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
-        self.model = self.algo(ddpgMlpPolicy, self.env,
-                               tensorboard_log=self.video_folder)
+        self.model = self.algo(self.policy, self.env, gamma=self.gamma,tau = self.tau, batch_size = self.batch_size,
+                                observation_range=self.observation_range, return_range=self.return_range, actor_lr = self.actor_lr,
+                                critic_lr =self.critic_lr, 
+                               tensorboard_log=self.video_folder )
         return self
 
 
