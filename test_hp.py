@@ -60,14 +60,14 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight):
 	cur_dir = os.path.dirname(os.path.abspath(__file__))
 	processes = []
 	num_processes = 0
-	with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+	with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
 		for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
 			num_processes += 1
 			print ("starting: " + ALGO+"_lr_"+str(
 				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 			video_folder = check_video_folder(cur_dir+"/log/", False)
-			video_folder = check_video_folder(cur_dir+"/log/"+"_ln_"+ALGO+"_lr_"+str(
-				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
+			video_folder = check_video_folder(cur_dir+"/log/"+"_ln_"+ALGO+"_ac_lr_"+str(
+				ac_lr)+"_cr_lr_"+str(cr_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 			video_folder = video_folder+"/"
 			
 			env = ur10svh(cur_dir+env_config_path,
