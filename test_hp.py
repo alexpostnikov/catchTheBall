@@ -23,6 +23,7 @@ import gym
 from multiprocessing import Process
 import shutil
 
+
 algos = \
 	{
 		"PPO": PPO2,
@@ -43,80 +44,92 @@ def yield_params():
 
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
+
+
+
+def learning_process(model, video_folder):
+
+	model.learn()
+	model.model.save(video_folder+"model.pkl")
+	model.validate()	
+
+import threading
+import concurrent.futures
+
 def run_learning(ALGO, env_config_path, algo_config_path, weight):
 	cur_dir = os.path.dirname(os.path.abspath(__file__))
-	for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
-		print ("starting: " + ALGO+"_lr_"+str(
-			ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
-		video_folder = check_video_folder(cur_dir+"/log/")
-		video_folder = check_video_folder(cur_dir+"/log/"+"_ln_"+ALGO+"_lr_"+str(
-			ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
-		video_folder = video_folder+"/"
-		
-		env = ur10svh(cur_dir+env_config_path,
-					  resource_directory=cur_dir+"/rsc/ur10/", video_folder=video_folder)  # gym.make('CartPole-v1')
-		c_models = \
-			{
-				"PPO": c_PPO(algo_config_path, env, video_folder),
-				"TRPO": c_TRPO(algo_config_path, env, video_folder),
-				"DDPG": c_DDPG(algo_config_path, env, video_folder),
-				"TD3": c_TD3(algo_config_path, env, video_folder)
-			}
+	processes = []
+	num_processes = 0
+	with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+		for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
+			num_processes += 1
+			print ("starting: " + ALGO+"_lr_"+str(
+				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
+			video_folder = check_video_folder(cur_dir+"/log/")
+			video_folder = check_video_folder(cur_dir+"/log/"+"_ln_"+ALGO+"_lr_"+str(
+				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
+			video_folder = video_folder+"/"
+			
+			env = ur10svh(cur_dir+env_config_path,
+						resource_directory=cur_dir+"/rsc/ur10/", video_folder=video_folder)  # gym.make('CartPole-v1')
+			c_models = \
+				{
+					"PPO": c_PPO(algo_config_path, env, video_folder),
+					"TRPO": c_TRPO(algo_config_path, env, video_folder),
+					"DDPG": c_DDPG(algo_config_path, env, video_folder),
+					"TD3": c_TD3(algo_config_path, env, video_folder)
+				}
 
-		runner =\
-			{
-				"PPO":  cur_dir+"/test_ppo2.py",
-				"TRPO": cur_dir+"/test_trpo.py",
-				"DDPG": cur_dir+"/test_ddpg.py",
-				"TD3":  cur_dir+"/test_TD3.py"
-			}
+			runner =\
+				{
+					"PPO":  cur_dir+"/test_ppo2.py",
+					"TRPO": cur_dir+"/test_trpo.py",
+					"DDPG": cur_dir+"/test_ddpg.py",
+					"TD3":  cur_dir+"/test_TD3.py"
+				}
 
-		c_models[ALGO].set_algo_params()
-		c_models[ALGO].gamma = gamma
-		c_models[ALGO].critic_lr = cr_lr
-		c_models[ALGO].actor_lr = ac_lr
-		c_models[ALGO].batch_size = tpb
-		c_models[ALGO].tau = tau
-		c_model = c_models[ALGO]()
-		if (str(weight) != "None"):
-			c_model.model = algos[ALGO].load(weight, c_model.env)
-			c_model.model.tensorboard_log = video_folder
+			c_models[ALGO].set_algo_params()
+			c_models[ALGO].gamma = gamma
+			c_models[ALGO].critic_lr = cr_lr
+			c_models[ALGO].actor_lr = ac_lr
+			c_models[ALGO].batch_size = tpb
+			c_models[ALGO].tau = tau
+			c_model = c_models[ALGO]()
+			if (str(weight) != "None"):
+				c_model.model = algos[ALGO].load(weight, c_model.env)
+				c_model.model.tensorboard_log = video_folder
 
-		### copy env and configs file to log folder ###
-		shutil.copy2(algo_config_path, video_folder)
-		shutil.copy2(cur_dir + env_config_path, video_folder)
-		shutil.copy2(runner[ALGO], video_folder)
-		shutil.copytree(cur_dir + "/environments/",
-						video_folder+"/environments/")
-		shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
-		
-
-		c_model.learn()
-		c_model.model.save(video_folder+"model.pkl")
-		c_model.validate()
+			### copy env and configs file to log folder ###
+			shutil.copy2(algo_config_path, video_folder)
+			shutil.copy2(cur_dir + env_config_path, video_folder)
+			shutil.copy2(runner[ALGO], video_folder)
+			shutil.copytree(cur_dir + "/environments/",
+							video_folder+"/environments/")
+			shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
+			# learning_process(c_model,video_folder)
+			executor.submit(learning_process, c_model, video_folder)
+			# p = threading.Thread(target=learning_process, args=(
+			# 	c_model, video_folder))
+			# processes.append(p)
+			# p.start()
+			# if num_processes == 4:
+			# 	for p in processes:
+			# 		p.join()
+			# 	num_processes = 0
+			# 	processes =  []
+			# 	print("done")
 
 
 if __name__ == "__main__":
+	jobs_config_path = "./configs/jobs_cfg.yaml"
 
-	parser = argparse.ArgumentParser(description='Process some integers.')
-	parser.add_argument('--jobs_config_path', type=str, default="./configs/jobs_cfg.yaml",
-						help='path to config file')
-	args = parser.parse_args()
-	jobs_config = load_yaml(args.jobs_config_path)
+	jobs_config = load_yaml(jobs_config_path)
 	env_config_path = jobs_config["env_config_path"]
 	cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
-	processes = []
-	for i in range(0, jobs_config["num_jobs"]):
-		ALGO = jobs_config["jobs"][i]["algo"]
-		weight = jobs_config["jobs"][i]["weight"]
-		algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
-
-		p = Process(target=run_learning, args=(
-			ALGO, env_config_path, algo_config_path, weight))
-		processes.append(p)
-		p.start()
-
-	for p in processes:
-		p.join()
+	ALGO = jobs_config["jobs"][0]["algo"]
+	weight = jobs_config["jobs"][0]["weight"]
+	algo_config_path = jobs_config["jobs"][0]["algo_config_path"]
+	run_learning(ALGO, env_config_path, algo_config_path, weight)
+	
 
 	print("done")

@@ -62,7 +62,7 @@ class c_class():
         self.ep_infos["r"] = sum(r)/len(r)
 
     def learn(self):
-        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=1000,
+        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=100,
                          tb_log_name="", callback=self.learning_callback)  # 1 6000 000 ~1hr
 
     def move_next_curriculum(self):
