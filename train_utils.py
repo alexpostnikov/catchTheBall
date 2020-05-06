@@ -9,7 +9,7 @@ ALGO = "PPO"
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 config = load_yaml(cur_dir+"/configs/ur10_cfg.yaml")
 
-def check_video_folder(video_folder):
+def check_video_folder(video_folder, unique=True):
 
     if (video_folder[-1] == "/"):
         video_folder = video_folder[0:-1]
@@ -17,12 +17,13 @@ def check_video_folder(video_folder):
     if not os.path.exists(video_folder):
         os.mkdir(video_folder)
     else:
-        for i in range(0,9999):
-            folder_name = video_folder+"_"+str(i)
-            if not os.path.exists(folder_name):
-                os.mkdir(folder_name)
-                video_folder = folder_name
-                return video_folder
+        if unique:
+            for i in range(0,9999):
+                folder_name = video_folder+"_"+str(i)
+                if not os.path.exists(folder_name):
+                    os.mkdir(folder_name)
+                    video_folder = folder_name
+                    return video_folder
     return video_folder
 
 
