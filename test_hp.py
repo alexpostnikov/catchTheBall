@@ -67,10 +67,10 @@ def learning_process(model, video_folder):
 
 def run_learning(ALGO, env_config_path, algo_config_path, weight, ac_lr, cr_lr,tpb, gamma, tau):
 			cur_dir = os.path.dirname(os.path.abspath(__file__))
-			print ("starting: " + ALGO+"_lr_"+str(
+			print ("starting: _ln_" + ALGO+"_lr_"+str(
 				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 			video_folder = check_video_folder(cur_dir+"/log/", False)
-			video_folder = check_video_folder(cur_dir+"/log/"+ALGO+"_ac_lr_"+str(
+			video_folder = check_video_folder(cur_dir+"/log/_ln_"+ALGO+"_ac_lr_"+str(
 				ac_lr)+"_cr_lr_"+str(cr_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 			video_folder = video_folder+"/"
 			
