@@ -300,8 +300,19 @@ class c_TD3(c_class):
         self.env = env
         self.video_folder = video_folder
 
+    def set_algo_params(self):
+        self.policy = tf3LnMlpPolicy
+        self.tau = self.algo_config["tau"]
+        self.batch_size = self.algo_config["timesteps_per_batch"]
+        self.policy_noise = self.algo_config["policy_noise"] # 0.2
+        self.random_exploration = self.algo_config["random_exploration"] #0.0
+        self.lr = self.algo_config["learning_rate"] # 0.0003
+        self.gamma = self.algo_config["gamma"]
+
+
     def __call__(self):
         # , random_exploration = 0.00, learning_starts=1000, buffer_size=5000)
-        self.model = self.algo(tf3MlpPolicy, self.env,
+        self.model = self.algo(tf3MlpPolicy, self.env, gamma=self.gamma,learning_rate=self.lr,batch_size=self.batch_size,
+                               tau=self.tau, target_policy_noise=self.policy_noise,
                                verbose=1, tensorboard_log=self.video_folder)
         return self

@@ -45,12 +45,12 @@ algos = \
 
 
 def yield_params():
-	for ac_lr in [1.0e-4, 2.5e-4]:
-		for crit_lr in [1.0e-3, 2.5e-3]:
+	for lr in [1.0e-4, 2.5e-4, 0.5e-4]:
+		for policy_noise in [0.2,0.3,0.1]:
 			for timesteps_per_batch in [256, 512]:
 				for gamma in [0.8,  0.99]:
 					for tau in [0.002, 0.001]:
-						yield (ac_lr, crit_lr, timesteps_per_batch, gamma, tau)
+						yield (lr,.3, timesteps_per_batch, gamma, tau)
 
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
@@ -58,20 +58,19 @@ cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
 
 def learning_process(model, video_folder):
-
 	model.learn()
 	model.model.save(video_folder+"model.pkl")
 	model.validate()	
 
 
 
-def run_learning(ALGO, env_config_path, algo_config_path, weight, ac_lr, cr_lr,tpb, gamma, tau):
+def run_learning(ALGO, env_config_path, algo_config_path, weight, lr, policy_noise, tpb, gamma, tau):
 			cur_dir = os.path.dirname(os.path.abspath(__file__))
 			print ("starting: _ln_" + ALGO+"_lr_"+str(
-				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
+				lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau) + "pn"+str(policy_noise))
 			video_folder = check_video_folder(cur_dir+"/log/", False)
 			video_folder = check_video_folder(cur_dir+"/log/_ln_"+ALGO+"_ac_lr_"+str(
-				ac_lr)+"_cr_lr_"+str(cr_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
+				lr)+"_cr_lr_"+str(lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau)+"pn"+str(policy_noise))
 			video_folder = video_folder+"/"
 			
 			env = ur10svh(cur_dir+env_config_path,
@@ -94,8 +93,8 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight, ac_lr, cr_lr,t
 
 			c_models[ALGO].set_algo_params()
 			c_models[ALGO].gamma = gamma
-			c_models[ALGO].critic_lr = cr_lr
-			c_models[ALGO].actor_lr = ac_lr
+			c_models[ALGO].lr = lr
+			c_models[ALGO].policy_noise = policy_noise
 			c_models[ALGO].batch_size = tpb
 			c_models[ALGO].tau = tau
 			c_model = c_models[ALGO]()
@@ -127,9 +126,10 @@ if __name__ == "__main__":
 	ALGO = jobs_config["jobs"][0]["algo"]
 	weight = jobs_config["jobs"][0]["weight"]
 	algo_config_path = jobs_config["jobs"][0]["algo_config_path"]
-	with concurrent.futures.ProcessPoolExecutor(max_workers=32) as executor:
-		for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
-			executor.submit (run_learning,ALGO, env_config_path, algo_config_path, weight, ac_lr, cr_lr,tpb, gamma, tau)
-	
+	with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
+		for lr,pn, timesteps_per_batch, gamma, tau in yield_params():
+			executor.submit (run_learning,ALGO, env_config_path, algo_config_path, weight,lr, pn, timesteps_per_batch, gamma, tau)
+	# for lr,pn, timesteps_per_batch, gamma, tau in yield_params():
+	# 	run_learning(ALGO, env_config_path, algo_config_path, weight,lr, pn, timesteps_per_batch, gamma, tau)
 
 	print("done")
