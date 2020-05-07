@@ -10,5 +10,6 @@ Hp_log_big1/
 __pycache__
 .idea
 log/
+log*
 video/
 weights/
