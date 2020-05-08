@@ -127,7 +127,7 @@ if __name__ == "__main__":
 	ALGO = jobs_config["jobs"][0]["algo"]
 	weight = jobs_config["jobs"][0]["weight"]
 	algo_config_path = jobs_config["jobs"][0]["algo_config_path"]
-	with concurrent.futures.ProcessPoolExecutor(max_workers=32) as executor:
+	with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
 		for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
 			executor.submit (run_learning,ALGO, env_config_path, algo_config_path, weight, ac_lr, cr_lr,tpb, gamma, tau)
 	
