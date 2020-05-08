@@ -9,6 +9,6 @@ Hp_log_big1/
 .pytest_cache/
 __pycache__
 .idea
-log/
+log*/
 video/
 weights/

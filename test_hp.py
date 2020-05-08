@@ -46,11 +46,11 @@ algos = \
 
 def yield_params():
 	for lr in [1.0e-4, 2.5e-4, 0.5e-4]:
-		for policy_noise in [0.2,0.3,0.1]:
+		for policy_noise in [0.2,0.1]:
 			for timesteps_per_batch in [256, 512]:
 				for gamma in [0.8,  0.99]:
 					for tau in [0.002, 0.001]:
-						yield (lr,.3, timesteps_per_batch, gamma, tau)
+						yield (lr,policy_noise, timesteps_per_batch, gamma, tau)
 
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
@@ -69,8 +69,8 @@ def run_learning(ALGO, env_config_path, algo_config_path, weight, lr, policy_noi
 			print ("starting: _ln_" + ALGO+"_lr_"+str(
 				lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau) + "pn"+str(policy_noise))
 			video_folder = check_video_folder(cur_dir+"/log/", False)
-			video_folder = check_video_folder(cur_dir+"/log/_ln_"+ALGO+"_ac_lr_"+str(
-				lr)+"_cr_lr_"+str(lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau)+"pn"+str(policy_noise))
+			video_folder = check_video_folder(cur_dir+"/log/_ln_"+ALGO+"_lr_"+str(
+				lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau)+"pn"+str(policy_noise))
 			video_folder = video_folder+"/"
 			
 			env = ur10svh(cur_dir+env_config_path,
