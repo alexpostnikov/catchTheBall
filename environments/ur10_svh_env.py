@@ -229,7 +229,6 @@ class ur10svh(ur10SvhBase):
     def is_terminal_state(self):
 
         self.done = False
-        # if (self.step_number >= self.max_step): # or (self.ball.pose[2] < 1.0) or (self.ball.pose[2] > 2.5):
         if (self.step_number >= self.max_step) or (self.ball.pose[2] < 1.0) or (self.ball.pose[2] > 2.5):
 
             self.done = True
@@ -309,12 +308,11 @@ class ur10svh(ur10SvhBase):
         self.pose_reward_buf.append(self.pose_reward)
         self.ball_reward_buf.append(self.ball_reward)
 
-        # print (rewards, ("action_dist" in rewards))
         if "action_dist" in rewards:
 
                 self.ee_rew = tolerance(np.linalg.norm(self.ee_goal - self.goal_pose), (0, 0.01), 5.,
                                         value_at_margin=0.00000001)
-                # print (self.ee_rew)
+
                 self.total_reward *= self.ee_rew
 
         if "jerk" in rewards:
@@ -334,17 +332,7 @@ class ur10svh(ur10SvhBase):
             self.update_cur = False
             if self.config["environment"]["curruclum"]["curruclum_step_max"] != self.curriculum_step:
                 self.curriculum_step += 1
-                # self.pose_reward_buf.clear()
                 self.update_cur_inner = False
-
-        # try:
-        #     if ((sum(self.ball_reward_buf) / len(self.ball_reward_buf)) > 0.9) and ((sum(self.pose_reward_buf) / len(self.pose_reward_buf)) > 0.9):
-        #         if self.curriculum_step < self.config["environment"]["curruclum"]["curruclum_step_max"]:
-        #             self.update_cur_inner = True
-        #
-        # except ZeroDivisionError:
-        # pass
-
         return
 
     def get_ob_dim(self):

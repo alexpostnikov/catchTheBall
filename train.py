@@ -32,9 +32,17 @@ algos = \
 
 }
 
+
+def yield_params():
+    for timesteps_per_batch in [1024, 512, 248, 2048]:
+        for HP_GAMMA in  [0.8,0.9,0.99]:
+            for  HP_entcoeff in [0.0,0.01]:
+                yield (timesteps_per_batch, HP_GAMMA, HP_entcoeff)
+            
+    
+
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
-def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
-    print ("ALGO ", ALGO)
+def run_learning (ALGO, env_config_path, algo_config_path,video_folder, weight):
 
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     env = ur10svh(cur_dir+env_config_path,
@@ -57,17 +65,18 @@ def run_learning(ALGO, env_config_path, algo_config_path,video_folder, weight):
 
     c_model = c_models[ALGO]()
     if (str(weight) != "None"):
-        print ("Contnuing learning from ", str(weight) )
         c_model.model = algos[ALGO].load(weight, c_model.env)
         c_model.model.tensorboard_log = video_folder
-    else:
-        print ("learning from scratch")
 
+    ### copy env and configs file to log folder ###
     shutil.copy2(algo_config_path, video_folder)
     shutil.copy2(cur_dir + env_config_path, video_folder)
     shutil.copy2(runner[ALGO], video_folder)
     shutil.copytree(cur_dir + "/environments/", video_folder+"/environments/")
     shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
+
+
+    
     c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
 
