@@ -62,7 +62,7 @@ class c_class():
         self.ep_infos["r"] = sum(r)/len(r)
 
     def learn(self):
-        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=1000,
+        self.model.learn(total_timesteps=self.algo_config["total_timesteps"], log_interval=100,
                          tb_log_name="", callback=self.learning_callback)  # 1 6000 000 ~1hr
 
     def move_next_curriculum(self):
@@ -271,11 +271,24 @@ class c_DDPG(c_class):
         self.video_folder = video_folder
         self.env = env
 
+    def set_algo_params(self):
+        self.policy = ddpgLnMlpPolicy
+        self.tau = self.algo_config["tau"]
+        self.batch_size = self.algo_config["timesteps_per_batch"]
+        self.ent_coef = self.algo_config["ent_coef"]
+        self.actor_lr = self.algo_config["actor_lr"]
+        self.critic_lr = self.algo_config["critic_lr"]
+        self.gamma = self.algo_config["gamma"]
+        self.observation_range = (-1,1)
+        self.return_range = (-1,1)
+
     def __call__(self):
         self.algo = DDPG
         # , verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
-        self.model = self.algo(ddpgMlpPolicy, self.env,
-                               tensorboard_log=self.video_folder)
+        self.model = self.algo(self.policy, self.env, gamma=self.gamma,tau = self.tau, batch_size = self.batch_size,
+                                observation_range=self.observation_range, return_range=self.return_range, actor_lr = self.actor_lr,
+                                critic_lr =self.critic_lr, 
+                               tensorboard_log=self.video_folder )
         return self
 
 
@@ -287,8 +300,19 @@ class c_TD3(c_class):
         self.env = env
         self.video_folder = video_folder
 
+    def set_algo_params(self):
+        self.policy = tf3LnMlpPolicy
+        self.tau = self.algo_config["tau"]
+        self.batch_size = self.algo_config["timesteps_per_batch"]
+        self.policy_noise = self.algo_config["policy_noise"] # 0.2
+        self.random_exploration = self.algo_config["random_exploration"] #0.0
+        self.lr = self.algo_config["learning_rate"] # 0.0003
+        self.gamma = self.algo_config["gamma"]
+
+
     def __call__(self):
         # , random_exploration = 0.00, learning_starts=1000, buffer_size=5000)
-        self.model = self.algo(tf3MlpPolicy, self.env,
+        self.model = self.algo(tf3MlpPolicy, self.env, gamma=self.gamma,learning_rate=self.lr,batch_size=self.batch_size,
+                               tau=self.tau, target_policy_noise=self.policy_noise,
                                verbose=1, tensorboard_log=self.video_folder)
         return self

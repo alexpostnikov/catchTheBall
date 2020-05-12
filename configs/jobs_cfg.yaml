@@ -2,10 +2,12 @@
   num_jobs: 1
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
+  {algo: TD3, algo_config_path:  ./configs/td3_cfg.yaml   ,  weight:  None},
+  {algo: DDPG, algo_config_path: ./configs/ddpg_cfg.yaml  ,  weight:  None},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,    weight:  None},  
   {algo: PPO, algo_config_path:  ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: DDPG, algo_config_path: ./configs/ppo_cfg.yaml  ,  weight:  None},
-  {algo: TD3, algo_config_path:  ./configs/ppo_cfg.yaml   ,  weight:  None},
+  
+  
   
   {algo: PPO, algo_config_path: ./configs/ppo_cfg2.yaml,     weight:  None},
   {algo: PPO, algo_config_path: ./configs/ppo_cfg1.yaml,     weight:  None},

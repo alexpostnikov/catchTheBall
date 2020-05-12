@@ -25,6 +25,17 @@ import concurrent.futures
 
 import shutil
 
+import threading
+
+
+import multiprocessing
+
+
+import concurrent.futures
+
+
+
+
 algos = \
 	{
 		"PPO": PPO2,
@@ -36,82 +47,92 @@ algos = \
 
 
 def yield_params():
-	for lr in [1.0e-4, 2.5e-4, 5.0e-4]:
-		for timesteps_per_batch in [1024, 512, 2048]:
-			for gamma in [0.8, 0.9, 0.99]:
-				for ent in [0.0, 0.01]:
-					yield (lr, timesteps_per_batch, gamma, ent)
-
+	for lr in [1.0e-4, 2.5e-4, 0.5e-4]:
+		for policy_noise in [0.2,0.3,0.1]:
+			for timesteps_per_batch in [256, 512]:
+				for gamma in [0.8,  0.99]:
+					for tau in [0.002, 0.001]:
+						yield (lr,.3, timesteps_per_batch, gamma, tau)
 
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 
 
-def run_learning(ALGO, env_config_path, algo_config_path, weight, lr, tpb, gamma, ent):
-	cur_dir = os.path.dirname(os.path.abspath(__file__))
 
-	print ("starting: " + ALGO+"_lr_"+str(
-		lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(ent))
-	video_folder = check_video_folder(cur_dir+"/log/")
-	video_folder = check_video_folder(cur_dir+"/log/"+ALGO+"_lr_"+str(
-		lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(ent))
-	video_folder = video_folder+"/"
-	
-	env = ur10svh(cur_dir+env_config_path,
-					resource_directory=cur_dir+"/rsc/ur10/", video_folder=video_folder)  # gym.make('CartPole-v1')
-	c_models = \
-		{
-			"PPO": c_PPO(algo_config_path, env, video_folder),
-			"TRPO": c_TRPO(algo_config_path, env, video_folder),
-			"DDPG": c_DDPG(algo_config_path, env, video_folder),
-			"TD3": c_TD3(algo_config_path, env, video_folder)
-		}
 
-	runner =\
-		{
-			"PPO":  cur_dir+"/test_ppo2.py",
-			"TRPO": cur_dir+"/test_trpo.py",
-			"DDPG": cur_dir+"/test_ddpg.py",
-			"TD3":  cur_dir+"/test_TD3.py"
-		}
-	
+def learning_process(model, video_folder):
+	model.learn()
+	model.model.save(video_folder+"model.pkl")
+	model.validate()	
 
-	c_models[ALGO].set_algo_params()
-	c_models[ALGO].gamma = gamma
-	c_models[ALGO].vf_stepsize = lr
-	c_models[ALGO].timesteps_per_batch = tpb
-	c_models[ALGO].ent_coef = ent
-	c_model = c_models[ALGO]()
-	if (str(weight) != "None"):
-		c_model.model = algos[ALGO].load(weight, c_model.env)
-		c_model.model.tensorboard_log = video_folder
 
-	### copy env and configs file to log folder ###
-	shutil.copy2(algo_config_path, video_folder)
-	shutil.copy2(cur_dir + env_config_path, video_folder)
-	shutil.copy2(runner[ALGO], video_folder)
-	shutil.copytree(cur_dir + "/environments/",
-					video_folder+"/environments/")
-	shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
-	
 
-	c_model.learn()
-	c_model.model.save(video_folder+"model.pkl")
-	c_model.validate()
+def run_learning(ALGO, env_config_path, algo_config_path, weight, lr, policy_noise, tpb, gamma, tau):
+			cur_dir = os.path.dirname(os.path.abspath(__file__))
+			print ("starting: _ln_" + ALGO+"_lr_"+str(
+				lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau) + "pn"+str(policy_noise))
+			video_folder = check_video_folder(cur_dir+"/log/", False)
+			video_folder = check_video_folder(cur_dir+"/log/_ln_"+ALGO+"_ac_lr_"+str(
+				lr)+"_cr_lr_"+str(lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau)+"pn"+str(policy_noise))
+			video_folder = video_folder+"/"
+			
+			env = ur10svh(cur_dir+env_config_path,
+						resource_directory=cur_dir+"/rsc/ur10/", video_folder=video_folder)  # gym.make('CartPole-v1')
+			c_models = \
+				{
+					"PPO": c_PPO(algo_config_path, env, video_folder),
+					"TRPO": c_TRPO(algo_config_path, env, video_folder),
+					"DDPG": c_DDPG(algo_config_path, env, video_folder),
+					"TD3": c_TD3(algo_config_path, env, video_folder)
+				}
+
+			runner =\
+				{
+					"PPO":  cur_dir+"/test_ppo2.py",
+					"TRPO": cur_dir+"/test_trpo.py",
+					"DDPG": cur_dir+"/test_ddpg.py",
+					"TD3":  cur_dir+"/test_TD3.py"
+				}
+
+			c_models[ALGO].set_algo_params()
+			c_models[ALGO].gamma = gamma
+			c_models[ALGO].lr = lr
+			c_models[ALGO].policy_noise = policy_noise
+			c_models[ALGO].batch_size = tpb
+			c_models[ALGO].tau = tau
+			c_model = c_models[ALGO]()
+			if (str(weight) != "None"):
+				c_model.model = algos[ALGO].load(weight, c_model.env)
+				c_model.model.tensorboard_log = video_folder
+
+			### copy env and configs file to log folder ###
+			shutil.copy2(algo_config_path, video_folder)
+			shutil.copy2(cur_dir + env_config_path, video_folder)
+			shutil.copy2(runner[ALGO], video_folder)
+			shutil.copytree(cur_dir + "/environments/",
+							video_folder+"/environments/")
+			shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
+			# learning_process(c_model,video_folder)
+			c_model.learn()
+			c_model.model.save(video_folder+"model.pkl")
+			c_model.validate()	
+			# learning_process(c_model, video_folder)
 
 
 if __name__ == "__main__":
-
-	
+	multiprocessing.set_start_method('forkserver', True)
 	jobs_config_path = "./configs/jobs_cfg.yaml"
+
 	jobs_config = load_yaml(jobs_config_path)
 	env_config_path = jobs_config["env_config_path"]
 	algo_config_path = jobs_config["jobs"][0]["algo_config_path"]
 	cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 	ALGO = jobs_config["jobs"][0]["algo"]
 	weight = jobs_config["jobs"][0]["weight"]
-	
-	with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-		for lr, timesteps_per_batch, gamma, ent in yield_params():
-			executor.submit(run_learning,ALGO, env_config_path, algo_config_path, weight, lr, timesteps_per_batch, gamma, ent)
+	algo_config_path = jobs_config["jobs"][0]["algo_config_path"]
+	with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
+		for lr,pn, timesteps_per_batch, gamma, tau in yield_params():
+			executor.submit (run_learning,ALGO, env_config_path, algo_config_path, weight,lr, pn, timesteps_per_batch, gamma, tau)
+	# for lr,pn, timesteps_per_batch, gamma, tau in yield_params():
+	# 	run_learning(ALGO, env_config_path, algo_config_path, weight,lr, pn, timesteps_per_batch, gamma, tau)
 
 	print("done")
