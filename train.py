@@ -32,12 +32,6 @@ algos = \
 
 }
 
-
-def yield_params():
-    for timesteps_per_batch in [1024, 512, 248, 2048]:
-        for HP_GAMMA in  [0.8,0.9,0.99]:
-            for  HP_entcoeff in [0.0,0.01]:
-                yield (timesteps_per_batch, HP_GAMMA, HP_entcoeff)
             
     
 
@@ -62,7 +56,7 @@ def run_learning (ALGO, env_config_path, algo_config_path,video_folder, weight):
         "DDPG": cur_dir+"/test_ddpg.py",
         "TD3":  cur_dir+"/test_TD3.py"
     }
-
+    c_models[ALGO].set_algo_params()
     c_model = c_models[ALGO]()
     if (str(weight) != "None"):
         c_model.model = algos[ALGO].load(weight, c_model.env)
@@ -94,7 +88,7 @@ if __name__ == "__main__":
         ALGO = jobs_config["jobs"][i]["algo"]
         weight = jobs_config["jobs"][i]["weight"]
         algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
-        video_folder = check_video_folder(cur_dir+"/log/")
+        video_folder = check_video_folder(cur_dir+"/log/", False)
         video_folder = check_video_folder(cur_dir+"/log/"+ALGO)
         video_folder = video_folder+"/"
         p = Process(target=run_learning, args=(ALGO, env_config_path, algo_config_path, video_folder, weight))

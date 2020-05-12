@@ -262,7 +262,6 @@ class c_TRPO(c_class):
                                                                  vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
         return self
 
-
 class c_DDPG(c_class):
 
     def __init__(self, config, env, video_folder):
