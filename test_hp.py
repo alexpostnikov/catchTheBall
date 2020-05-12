@@ -69,10 +69,10 @@ def learning_process(model, video_folder):
 def run_learning(ALGO, env_config_path, algo_config_path, weight, lr, policy_noise, tpb, gamma, tau):
 			cur_dir = os.path.dirname(os.path.abspath(__file__))
 			print ("starting: _ln_" + ALGO+"_lr_"+str(
-				lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau) + "pn"+str(policy_noise))
-			video_folder = check_video_folder(cur_dir+"/log/", False)
-			video_folder = check_video_folder(cur_dir+"/log/_ln_"+ALGO+"_ac_lr_"+str(
-				lr)+"_cr_lr_"+str(lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau)+"pn"+str(policy_noise))
+				ac_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
+			video_folder = check_video_folder(cur_dir+"/log_ddpg/", False)
+			video_folder = check_video_folder(cur_dir+"/log_ddpg/_ln_"+ALGO+"_ac_lr_"+str(
+				ac_lr)+"_cr_lr_"+str(cr_lr)+"_tpb_"+str(tpb) + "_g_" + str(gamma)+"_ent_"+str(tau))
 			video_folder = video_folder+"/"
 			
 			env = ur10svh(cur_dir+env_config_path,
@@ -130,9 +130,8 @@ if __name__ == "__main__":
 	weight = jobs_config["jobs"][0]["weight"]
 	algo_config_path = jobs_config["jobs"][0]["algo_config_path"]
 	with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
-		for lr,pn, timesteps_per_batch, gamma, tau in yield_params():
-			executor.submit (run_learning,ALGO, env_config_path, algo_config_path, weight,lr, pn, timesteps_per_batch, gamma, tau)
-	# for lr,pn, timesteps_per_batch, gamma, tau in yield_params():
-	# 	run_learning(ALGO, env_config_path, algo_config_path, weight,lr, pn, timesteps_per_batch, gamma, tau)
+		for ac_lr, cr_lr,tpb, gamma, tau in yield_params():
+			executor.submit (run_learning,ALGO, env_config_path, algo_config_path, weight, ac_lr, cr_lr,tpb, gamma, tau)
+	
 
 	print("done")
