@@ -23,6 +23,8 @@ import gym
 from multiprocessing import Process
 import shutil
 
+
+set_global_seeds(1)
 algos = \
 { 
     "PPO"  : PPO2,

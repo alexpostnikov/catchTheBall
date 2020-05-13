@@ -112,9 +112,10 @@ def tolerance(x, bounds=(0.0, 0.0), margin=0.0, sigmoid='gaussian',
 if __name__ == "__main__":
   import matplotlib.pyplot as plt
 
-  x = np.linspace(0, 2, 200)
+  x = np.linspace(-0.5, 0.5, 200)
+  y = tolerance(x, (0.0, 0.02), 0.15, value_at_margin=0.0001)
   # tolerance(np.linalg.norm(self.ee_goal - self.goal_pose), (0, 0.01), 0.5, value_at_margin=0.00000001)
-  y = tolerance(x, (0, 0.01), 1.0, value_at_margin=0.0000001)
+  # y = tolerance(x, (0, 0.01), 1.0, value_at_margin=0.0000001)
 
   plt.plot(x,y)
 
