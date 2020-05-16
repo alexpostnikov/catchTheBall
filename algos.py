@@ -174,7 +174,7 @@ class c_PPO(c_class):
         else:
             self.env = DummyVecEnv([self.env])
         self.algo = PPO2
-        self.model = self.algo(MlpPolicy, self.env, verbose=self.algo_config["verbose"], tensorboard_log=self.video_folder),
+        self.model = self.algo(MlpPolicy, self.env, verbose=self.algo_config["verbose"], tensorboard_log=self.video_folder)
                             #    n_steps=self.n_steps, ent_coef=self.ent_coef, learning_rate=self.lr,
                             #    gamma=self.gamma,
                             #    policy_kwargs=self.policy_kwargs)
