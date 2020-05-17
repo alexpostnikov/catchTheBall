@@ -15,7 +15,7 @@ from datetime import datetime
 import time
 
 set_global_seeds(1)
-
+import csv
 
 class c_class():
 
@@ -30,6 +30,7 @@ class c_class():
         self.save_model_flag = True
         self.ep_infos = None
         self.saving_time = time.time()
+        self.log_files = {}
 
     def __call__(self):
         raise NotImplementedError
@@ -100,8 +101,16 @@ class c_class():
         except ZeroDivisionError:
             print("zero division in check_curriculum!")
 
-    def learning_callback(self, locals, globals):
+    @staticmethod
+    def add_value (file, step,value):
+        with open(file, mode='a') as log_file:
+            writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([time.time(), step, value])
 
+
+
+    def learning_callback(self, locals, globals):
+        
         self.check_curriculum()
 
         if locals["self"].num_timesteps - self.timestamp > self.algo_config["validate_every_timesteps"]:
@@ -119,27 +128,49 @@ class c_class():
             self.saving_time = time.time()
             locals["self"].save(self.video_folder + "model_" +
                                 datetime.now().strftime("%m_%d_%Y_%H:%M:%S")+".pkl")
-        try:
-            if self.ep_infos is not None:
+        if self.ep_infos is not None:
                 summary = tf.Summary(value=[tf.Summary.Value(
                     tag='episode_info/ep_len', simple_value=self.ep_infos["l"])])
                 locals['writer'].add_summary(
                     summary, locals["self"].num_timesteps)
+
                 summary = tf.Summary(value=[tf.Summary.Value(
                     tag='episode_info/pose_rew', simple_value=self.ep_infos["pose_rew"])])
                 locals['writer'].add_summary(summary, self.timestamp)
+                self.add_value(self.log_files["pose_rew"], locals["self"].num_timesteps, self.ep_infos["pose_rew"])
+
                 summary = tf.Summary(value=[tf.Summary.Value(
                     tag='episode_info/ball_rew', simple_value=self.ep_infos["ball_rew"])])
                 locals['writer'].add_summary(summary, self.timestamp)
+                self.add_value(self.log_files["ball_rew"], locals["self"].num_timesteps, self.ep_infos["ball_rew"])
+
                 summary = tf.Summary(value=[tf.Summary.Value(
                     tag='episode_info/curriculum', simple_value=self.ep_infos["curriculum_step"])])
                 locals['writer'].add_summary(summary, self.timestamp)
+                self.add_value(self.log_files["curriculum"], locals["self"].num_timesteps, self.ep_infos["curriculum_step"])
+                
+                
+
                 summary = tf.Summary(value=[tf.Summary.Value(
                     tag='episode_info/final_reward', simple_value=self.ep_infos["r"])])
                 locals['writer'].add_summary(summary, self.timestamp)
-        except:
-            pass
+                self.ep_infos = None
+                
 
+
+    def create_log_files(self):
+        
+        file_name = self.video_folder +"/ball_rew" + ".csv"
+        self.log_files["ball_rew"] = file_name
+        file_name = self.video_folder+"/curriculum" + ".csv"
+        self.log_files["curriculum"] = file_name
+        file_name = self.video_folder+"/pose_rew" + ".csv"
+        self.log_files["pose_rew"] = file_name
+        for _, file_name in self.log_files.items():
+            print (file_name)
+            with open(file_name, mode='a') as file_name:
+                writer = csv.writer(file_name, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(['Wall time', 'Step', 'Value'])
 
 class c_PPO(c_class):
 
@@ -178,6 +209,7 @@ class c_PPO(c_class):
                                n_steps=self.n_steps, ent_coef=self.ent_coef, learning_rate=self.lr,
                                gamma=self.gamma,
                                policy_kwargs=self.policy_kwargs)
+        self.create_log_files()
         return self
 
     def validate(self):
@@ -260,6 +292,7 @@ class c_TRPO(c_class):
                                verbose=self.algo_config["verbose"], entcoeff=self.ent_coef,
                                policy_kwargs=dict(net_arch=[dict(pi=[self.algo_config["nn_size"], self.algo_config["nn_size"]],
                                                                  vf=[self.algo_config["nn_size"], self.algo_config["nn_size"]])]))
+        self.create_log_files()
         return self
 
 class c_DDPG(c_class):
@@ -286,6 +319,7 @@ class c_DDPG(c_class):
         # , verbose=1,random_exploration=0.02,return_range=(-1,1),observation_range=(-1,1))
         self.model = self.algo(self.policy, self.env, gamma=self.gamma,tau = self.tau, batch_size = self.batch_size,
                                 actor_lr = self.actor_lr, critic_lr =self.critic_lr,  tensorboard_log=self.video_folder )
+        self.create_log_files()
         return self
 
 
@@ -308,8 +342,8 @@ class c_TD3(c_class):
 
 
     def __call__(self):
-        # , random_exploration = 0.00, learning_starts=1000, buffer_size=5000)
         self.model = self.algo(tf3MlpPolicy, self.env, gamma=self.gamma,learning_rate=self.lr,batch_size=self.batch_size,
                                tau=self.tau, target_policy_noise=self.policy_noise,
                                verbose=1, tensorboard_log=self.video_folder)
+        self.create_log_files()
         return self
