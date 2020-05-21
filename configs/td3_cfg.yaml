@@ -1,6 +1,6 @@
   num_envs: 1
   
-  total_timesteps: 10000000
+  total_timesteps: 30000000
   validate_every_timesteps: 10000
   verbose: 0
 
