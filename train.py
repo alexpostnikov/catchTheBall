@@ -34,9 +34,6 @@ algos = \
 
 }
 
-            
-    
-
 cur_dir = rsg_root = os.path.dirname(os.path.abspath(__file__))
 def run_learning (ALGO, env_config_path, algo_config_path,video_folder, weight):
 
