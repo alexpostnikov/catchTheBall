@@ -73,12 +73,12 @@ def run_learning (ALGO, env_config_path, algo_config_path,video_folder, weight):
     shutil.copytree(cur_dir + "/configs/", video_folder + "/configs/")
 
 
-    
+
     c_model.learn()
     c_model.model.save(video_folder+"model.pkl")
 
 if __name__ == "__main__":
-    
+
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--jobs_config_path', type=str, default="./configs/jobs_cfg.yaml",
                     help='path to config file')
@@ -91,13 +91,13 @@ if __name__ == "__main__":
         ALGO = jobs_config["jobs"][i]["algo"]
         weight = jobs_config["jobs"][i]["weight"]
         algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
-        video_folder = check_video_folder(cur_dir+"/log/", False)
-        video_folder = check_video_folder(cur_dir+"/log/"+ALGO)
+        video_folder = check_video_folder(cur_dir+"/log_10m_opt/", False)
+        video_folder = check_video_folder(cur_dir+"/log_10m_opt/"+ALGO)
         video_folder = video_folder+"/"
         p = Process(target=run_learning, args=(ALGO, env_config_path, algo_config_path, video_folder, weight))
         processes.append(p)
         p.start()
-    
+
     for p in processes:
         p.join()
 
