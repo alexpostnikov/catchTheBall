@@ -124,7 +124,7 @@ class c_class():
             except:
                 pass
 
-        if time.time() - self.saving_time > 600:
+        if time.time() - self.saving_time > 30*60:
             self.saving_time = time.time()
             locals["self"].save(self.video_folder + "model_" +
                                 datetime.now().strftime("%m_%d_%Y_%H:%M:%S")+".pkl")
