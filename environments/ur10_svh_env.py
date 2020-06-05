@@ -53,11 +53,14 @@ class ur10svh(ur10SvhBase):
 
         if self.visualizable:
 
-            self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
+            self.vis.deselect()
+            self.vis.get_camera_man().set_yaw_pitch_dist(4.14, -1.3, 4, track=False)
+            self.vis.get_camera_man().set_pivot_offset(np.array([0., 0., 1.5]))
+            self.vis.add_visual_object("robot_init_pose", "sphereMesh", "blue", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("init_pose", "sphereMesh", "white", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("goal_pose", "sphereMesh", "green", [0.02, 0.02, 0.02])
-            self.vis.add_visual_object("ball_pose", "sphereMesh", "red", [0.035, 0.035, 0.035])
-            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.035, 0.035, 0.035])
+            self.vis.add_visual_object("ball_pose", "sphereMesh", "red", [0.03, 0.03, 0.03])
+            # self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.035, 0.035, 0.035])
 
         self.obsEndef = self.robot.get_endef_pose()
 
@@ -113,7 +116,7 @@ class ur10svh(ur10SvhBase):
         if self.visualizable:
             visual_objects = self.vis.get_visual_object_list()
             visual_objects["ball_pose"].pos_offset = self.ball.pose
-            visual_objects["ee_goal"].pos_offset = [self.ee_goal[0,0],self.ee_goal[0,1],self.ee_goal[0,2]]
+            # visual_objects["ee_goal"].pos_offset = [self.ee_goal[0,0],self.ee_goal[0,1],self.ee_goal[0,2]]
             self.visualization_frame_number += 1
         loop_count = int(self.control_dt / self.simulation_dt + 1.e-10)
         vis_decimation = int(
@@ -196,6 +199,7 @@ class ur10svh(ur10SvhBase):
             l = self.vis.get_visual_object_list()
             l["init_pose"].pos_offset = self.ball.ballPose
             l["goal_pose"].pos_offset = self.goal_pose
+            l["robot_init_pose"].pos_offset = self.robot.endef_pose
         return self.ob_scaled
 
     def render(self):

@@ -138,7 +138,6 @@ class ur10SvhBase(gym.Env):
 
         self.vis_inited = False
         if self.visualizable:
-        # if 1:
             self.init_vis()
 
 
@@ -147,7 +146,7 @@ class ur10SvhBase(gym.Env):
         self.ob_double, self.ob_scaled = np.zeros(
             self.ob_dim), np.zeros(self.ob_dim)
         self.body_linear_vel, self.body_angular_vel = np.zeros(3), np.zeros(3)
-        self.buf_len = 6000
+        self.buf_len = 18000
         self.reward_buff__ = collections.deque(maxlen=self.buf_len)
         print (len(self.reward_buff__))
 
