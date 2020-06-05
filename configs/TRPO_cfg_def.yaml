@@ -2,12 +2,12 @@
   # ent_coef: (float) Entropy coefficint for the loss calculation
   ent_coef: 0.00
   #gamma: (float) Discount factor
-  total_timesteps: 1e7
+  total_timesteps: 10000000
   validate_every_timesteps: 30000
   gamma: 0.99
   timesteps_per_batch: 1024
   nn_size: 64
-  learning_rate: 3e-4
+  learning_rate: 3.0e-4
   verbose: 0
 
   #vf_coef: (float) Value function coefficient for the loss calculation
