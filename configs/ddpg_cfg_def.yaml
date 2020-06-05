@@ -8,7 +8,7 @@
   ent_coef: 0.00 # ent_coef: (float) Entropy coefficient for the loss calculation
   gamma: 0.99 #gamma: (float) Discount factor
   timesteps_per_batch: 128  #16
-  actor_lr: 1e-4
-  critic_lr: 1e-3
+  actor_lr: 1.e-4
+  critic_lr: 1.e-3
 
   quality: 0.85
