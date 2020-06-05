@@ -1,0 +1,14 @@
+  num_envs: 1
+  
+  total_timesteps: 10000000
+  validate_every_timesteps: 10000
+  verbose: 0
+
+  tau: 0.001
+  ent_coef: 0.00 # ent_coef: (float) Entropy coefficient for the loss calculation
+  gamma: 0.99 #gamma: (float) Discount factor
+  timesteps_per_batch: 128  #16
+  actor_lr: 1e-4
+  critic_lr: 1e-3
+
+  quality: 0.85
