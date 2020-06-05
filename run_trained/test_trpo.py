@@ -21,7 +21,7 @@ if __name__ == "__main__":
     model_path = "best_model.pkl"
 
     env = ur10svh(cur_dir + "/ur10_cfg.yaml",
-                  resource_directory=cath_the_ball_dir + "/rsc/ur10/", visualize=True)
+                  resource_directory=cath_the_ball_dir + "/rsc/ur10/", visualize=True, video_folder="./video/")
 
     model = TRPO.load(model_path)
     env = DummyVecEnv([env])

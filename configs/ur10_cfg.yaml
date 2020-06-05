@@ -2,7 +2,7 @@ seed: 1
 
 
 environment:
-  render: 1
+  render: 0
   # render_every_n_resets:  2000
   render_every_n_mins: 30
   
