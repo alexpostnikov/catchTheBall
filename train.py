@@ -82,8 +82,8 @@ if __name__ == "__main__":
         ALGO = jobs_config["jobs"][i]["algo"]
         weight = jobs_config["jobs"][i]["weight"]
         algo_config_path = jobs_config["jobs"][i]["algo_config_path"]
-        video_folder = check_video_folder(cur_dir+"/log/", False)
-        video_folder = check_video_folder(cur_dir+"/log/"+ALGO)
+        video_folder = check_video_folder(cur_dir+"/log_sum_vs_prod/", False)
+        video_folder = check_video_folder(cur_dir+"/log_sum_vs_prod/"+ALGO)
         video_folder = video_folder+"/"
         p = Process(target=run_learning, args=(ALGO, env_config_path, algo_config_path, video_folder, weight))
         processes.append(p)
