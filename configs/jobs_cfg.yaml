@@ -2,8 +2,8 @@
   num_jobs: 2
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
-  {algo: PPO, algo_config_path: ./configs/ppo_cfg.yaml,     weight:  None},
-  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,   weight:  None},
+  {algo: PPO, algo_config_path: ./configs/ppo_cfg_def.yaml,     weight:  None},
+  {algo: TRPO, algo_config_path: ./configs/TRPO_cfg_def.yaml,   weight:  None},
 
   {algo: PPO, algo_config_path:  ./configs/ppo_cfg.yaml,     weight:  "/home/robot/repos/catchTheBall/log/PPO_8/model_05_20_2020_21:53:45.pkl"},
   {algo: TRPO, algo_config_path: ./configs/TRPO_cfg.yaml,    weight:  "/home/robot/repos/catchTheBall/log/TRPO_6/model_05_20_2020_21:53:40.pkl"},
