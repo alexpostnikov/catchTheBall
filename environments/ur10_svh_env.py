@@ -16,9 +16,8 @@ from .robot import Robot, get_endef_position_by_joint
 import math
 import time
 
+rewards = ["ball_dist", "goal_dist"]  # , "action_dist"]#,"jerk"]#,, ]#,  # #,
 
-
-rewards = ["ball_dist", "goal_dist"]#, "action_dist"]#,"jerk"]#,, ]#,  # #, 
 
 class ur10svh(ur10SvhBase):
     """Custom Environment that follows gym interface"""
@@ -34,14 +33,14 @@ class ur10svh(ur10SvhBase):
         self.curriculum_step = self.config["environment"]["curruclum"]["curruclum_step_init"]
 
         self.desired_fps = 60.
-        vis  = raisim.OgreVis.get() if self.visualizable else None
+        vis = raisim.OgreVis.get() if self.visualizable else None
         self.robot = Robot(self.world, vis, self.visualizable, self.config, resource_directory)
         self.robot.robot_to_init_pose()
 
         self.ball = Ball(self.world, vis, self.visualizable, self.config)
 
         self.goal_pose_init = self.robot.endef_pose
-        self.goal_pose = np.array(self.goal_pose_init)# - np.array([0,0,0.05])
+        self.goal_pose = np.array(self.goal_pose_init)  # - np.array([0,0,0.05])
         self.ball_reward_averaged = 0
         self.pose_reward_averaged = 0
 
@@ -52,12 +51,14 @@ class ur10svh(ur10SvhBase):
         self.update_cur_inner = False
 
         if self.visualizable:
-
-            self.vis.get_camera_man().set_yaw_pitch_dist(3.14, -1.3, 3, track=True)
+            self.vis.deselect()
+            self.vis.get_camera_man().set_yaw_pitch_dist(4.14, -1.3, 4, track=False)
+            self.vis.get_camera_man().set_pivot_offset(np.array([0., 0., 1.5]))
+            self.vis.add_visual_object("robot_init_pose", "sphereMesh", "blue", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("init_pose", "sphereMesh", "white", [0.02, 0.02, 0.02])
             self.vis.add_visual_object("goal_pose", "sphereMesh", "green", [0.02, 0.02, 0.02])
-            self.vis.add_visual_object("ball_pose", "sphereMesh", "red", [0.035, 0.035, 0.035])
-            self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.035, 0.035, 0.035])
+            self.vis.add_visual_object("ball_pose", "sphereMesh", "red", [0.03, 0.03, 0.03])
+            # self.vis.add_visual_object("ee_goal", "sphereMesh", "yellow", [0.035, 0.035, 0.035])
 
         self.obsEndef = self.robot.get_endef_pose()
 
@@ -88,7 +89,7 @@ class ur10svh(ur10SvhBase):
             else:
                 skip_counter += 1
 
-        if  not self.speed_control:
+        if not self.speed_control:
             self.p_targets = self.robot.transformAction(self.p_target12)
             self.p_targets = applayMimic(self.p_targets)
 
@@ -97,13 +98,12 @@ class ur10svh(ur10SvhBase):
             # for p_target in self.p_targets:
             #     p_target *= 2
 
+        if self.speed_control:
+            self.robot.robot.set_pd_targets(0 * self.p_targets, self.p_targets)
 
-        if  self.speed_control:
-            self.robot.robot.set_pd_targets(0*self.p_targets, self.p_targets)
-        
-        if  not self.speed_control:
+        if not self.speed_control:
             self.robot.robot.set_pd_targets(self.p_targets, 0 * self.p_targets)
-        
+
         self.ee_goal = get_endef_position_by_joint(self.p_targets[0:6])
 
         # rotation and discplacement of ur base (from urdf?)
@@ -113,7 +113,7 @@ class ur10svh(ur10SvhBase):
         if self.visualizable:
             visual_objects = self.vis.get_visual_object_list()
             visual_objects["ball_pose"].pos_offset = self.ball.pose
-            visual_objects["ee_goal"].pos_offset = [self.ee_goal[0,0],self.ee_goal[0,1],self.ee_goal[0,2]]
+            # visual_objects["ee_goal"].pos_offset = [self.ee_goal[0,0],self.ee_goal[0,1],self.ee_goal[0,2]]
             self.visualization_frame_number += 1
         loop_count = int(self.control_dt / self.simulation_dt + 1.e-10)
         vis_decimation = int(
@@ -125,7 +125,7 @@ class ur10svh(ur10SvhBase):
                 self.vis.render_one_frame()
                 # print (self.visualization_frame_number)
                 if not self.in_recording:
-                    
+
                     try:
                         self.vis.showWindow()
                     except:
@@ -148,14 +148,12 @@ class ur10svh(ur10SvhBase):
         self.update_extra_info()
         # update if episode is over or not
 
-
         # update extra info
 
         if any(np.isnan(self.ob_scaled)) == True:
-            print ("self.ob_scaled, \n", self.ob_scaled)
-            print ("action, \n", action)
+            print("self.ob_scaled, \n", self.ob_scaled)
+            print("action, \n", action)
             raise
-
 
         return np.asarray(self.ob_double), self.total_reward, self.done, self.extra_info
 
@@ -175,11 +173,11 @@ class ur10svh(ur10SvhBase):
                 self.ob_double[counter] = self.gv[i] * 0.001
                 counter += 1
 
-        self.ob_double[counter:counter+3] = self.ball.pose_scaled
+        self.ob_double[counter:counter + 3] = self.ball.pose_scaled
         counter += 3
-        self.ob_double[counter:counter+3] = self.ball.velocity_scaled
+        self.ob_double[counter:counter + 3] = self.ball.velocity_scaled
         counter += 3
-        self.ob_double[counter:counter+11] = self.get_ball_collision()
+        self.ob_double[counter:counter + 11] = self.get_ball_collision()
         return self.ob_double
 
     def reset(self):
@@ -196,6 +194,7 @@ class ur10svh(ur10SvhBase):
             l = self.vis.get_visual_object_list()
             l["init_pose"].pos_offset = self.ball.ballPose
             l["goal_pose"].pos_offset = self.goal_pose
+            l["robot_init_pose"].pos_offset = self.robot.endef_pose
         return self.ob_scaled
 
     def render(self):
@@ -236,12 +235,11 @@ class ur10svh(ur10SvhBase):
             self.ball_reward_averaged = np.mean(np.array(self.ball_reward_buf))
             self.pose_reward_averaged = np.mean(np.array(self.pose_reward_buf))
 
-
             if self.visualizable:
 
                 if self.in_recording:
                     is_time_to_stop_render = (self.visualization_frame_number) > self.max_step
-                    
+
                     if is_time_to_stop_render:
                         self.visualization_frame_number = 0
                         self.visualizable = False
@@ -253,7 +251,8 @@ class ur10svh(ur10SvhBase):
                                 pass
                         self.in_recording = False
 
-            is_time_to_render = (time.time() - self.recording_time_start > self.config["environment"]["render_every_n_mins"] * 60.0) and \
+            is_time_to_render = (time.time() - self.recording_time_start > self.config["environment"][
+                "render_every_n_mins"] * 60.0) and \
                                 (self.vis_inited)
             if is_time_to_render:
                 self.visualizable = True
@@ -290,34 +289,34 @@ class ur10svh(ur10SvhBase):
     def update_reward(self):
         self.obsEndef = self.robot.endef_pose
         self.total_reward = 1
-        
+
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
         self.ball_reward = tolerance(catch_dist, (0.0, 0.02), 0.15, value_at_margin=0.0001)
         if "ball_dist" in rewards:
             self.total_reward *= self.ball_reward
         else:
-            self.ball_reward = 1 # for normal curriculums
-        
+            self.ball_reward = 1  # for normal curriculums
+
         bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
         self.pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.001)
         if "goal_dist" in rewards:
             self.total_reward *= self.pose_reward
         else:
-            self.pose_reward = 1 # for normal curriculums
-        
+            self.pose_reward = 1  # for normal curriculums
+
         self.pose_reward_buf.append(self.pose_reward)
         self.ball_reward_buf.append(self.ball_reward)
 
         if "action_dist" in rewards:
+            self.ee_rew = tolerance(np.linalg.norm(self.ee_goal - self.goal_pose), (0, 0.01), 5.,
+                                    value_at_margin=0.00000001)
 
-                self.ee_rew = tolerance(np.linalg.norm(self.ee_goal - self.goal_pose), (0, 0.01), 5.,
-                                        value_at_margin=0.00000001)
-
-                self.total_reward *= self.ee_rew
+            self.total_reward *= self.ee_rew
 
         if "jerk" in rewards:
             if self.p_targets_last is not None:
-                self.j_rew = tolerance( np.linalg.norm(self.p_targets - self.p_targets_last), (0.0,0.02), 2.0,value_at_margin=0.000001)
+                self.j_rew = tolerance(np.linalg.norm(self.p_targets - self.p_targets_last), (0.0, 0.02), 2.0,
+                                       value_at_margin=0.000001)
 
                 self.total_reward *= self.j_rew
             self.p_targets_last = self.p_targets
@@ -353,7 +352,8 @@ class ur10svh(ur10SvhBase):
 
     def get_ball_collision(self):
 
-        desired_col_indexes = {26: 0.1, 24: 0.1, 22: 0.1, 20: 0.1, 19: 0.1, 8: 0.1, 6: 0.1, 15: 0.1, 9: 0.1, 11: 0.1, 10: 0.1}
+        desired_col_indexes = {26: 0.1, 24: 0.1, 22: 0.1, 20: 0.1, 19: 0.1, 8: 0.1, 6: 0.1, 15: 0.1, 9: 0.1, 11: 0.1,
+                               10: 0.1}
 
         contacts = self.robot.robot.get_contacts()
         for contact in contacts:

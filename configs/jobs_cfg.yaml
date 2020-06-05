@@ -1,5 +1,5 @@
 
-  num_jobs: 4
+  num_jobs: 2
   env_config_path: /configs/ur10_cfg.yaml
   jobs: [
   {algo: TD3, algo_config_path:  ./configs/td3_cfg.yaml   ,  weight:  None},
