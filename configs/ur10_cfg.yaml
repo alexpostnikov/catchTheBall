@@ -5,9 +5,9 @@ environment:
   render: 0
   # render_every_n_resets:  2000
   render_every_n_mins: 30
-  
-  speed_control: False
 
+  speed_control: False
+  reward_as_multiplication: 1
   simulation_dt: 0.00125
   control_dt: 0.01 # 0.01
   max_time: 5.0

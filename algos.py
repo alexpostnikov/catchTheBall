@@ -3,8 +3,6 @@ from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize, SubprocVe
 from stable_baselines import PPO2, TD3, TRPO, DDPG, GAIL
 from stable_baselines.common import set_global_seeds, make_vec_env
 
-from environments.multy_tread_env import RaisimGymVecEnv
-from stable_baselines.ddpg.policies import MlpPolicy as ddpgMlpPolicy
 from stable_baselines.ddpg.policies import LnMlpPolicy as ddpgLnMlpPolicy
 
 from stable_baselines.td3.policies import MlpPolicy as tf3MlpPolicy
@@ -102,11 +100,10 @@ class c_class():
             print("zero division in check_curriculum!")
 
     @staticmethod
-    def add_value (file, step,value):
+    def add_value(file, step,value):
         with open(file, mode='a') as log_file:
             writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([time.time(), step, value])
-
 
 
     def learning_callback(self, locals, globals):

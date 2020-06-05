@@ -7,15 +7,10 @@ except:
     pass
 
 from environments.ur10_svh_env import ur10svh
-
-from stable_baselines.common.policies import MlpPolicy
-from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines.common.vec_env import SubprocVecEnv
 from stable_baselines import PPO2, TD3, TRPO, DDPG, GAIL
 from stable_baselines.common import set_global_seeds, make_vec_env
 from train_utils import  *
-from stable_baselines.ddpg.policies import MlpPolicy as ddpgMlpPolicy
-from stable_baselines.td3.policies import  MlpPolicy as tf3MlpPolicy
+
 import argparse
 from algos import c_DDPG, c_PPO, c_TD3, c_TRPO
 

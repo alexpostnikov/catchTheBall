@@ -293,21 +293,33 @@ class ur10svh(ur10SvhBase):
 
     def update_reward(self):
         self.obsEndef = self.robot.endef_pose
-        self.total_reward = 1
+
+        if self.config["environment"]["reward_as_multiplication"]:
+            self.total_reward = 1
+        else:
+            self.total_reward = 0
         
         catch_dist = np.linalg.norm(self.obsEndef - self.ball.pose)
         self.ball_reward = tolerance(catch_dist, (0.0, 0.02), 0.15, value_at_margin=0.0001)
+
         if "ball_dist" in rewards:
-            self.total_reward *= self.ball_reward
+            if self.config["environment"]["reward_as_multiplication"]:
+                self.total_reward *= self.ball_reward
+            if not self.config["environment"]["reward_as_multiplication"]:
+                self.total_reward += self.ball_reward
         else:
-            self.ball_reward = 1 # for normal curriculums
-        
+            self.ball_reward = 1  # for normal curriculums
+
         bring_dist = np.linalg.norm(self.ball.pose - self.goal_pose)
+
         self.pose_reward = tolerance(bring_dist, (0.0, 0.01), 1.0, value_at_margin=0.001)
         if "goal_dist" in rewards:
-            self.total_reward *= self.pose_reward
+            if self.config["environment"]["reward_as_multiplication"]:
+                self.total_reward *= self.pose_reward
+            if not self.config["environment"]["reward_as_multiplication"]:
+                self.total_reward += self.pose_reward
         else:
-            self.pose_reward = 1 # for normal curriculums
+            self.pose_reward = 1  # for normal curriculums
         
         self.pose_reward_buf.append(self.pose_reward)
         self.ball_reward_buf.append(self.ball_reward)
@@ -321,7 +333,7 @@ class ur10svh(ur10SvhBase):
 
         if "jerk" in rewards:
             if self.p_targets_last is not None:
-                self.j_rew = tolerance( np.linalg.norm(self.p_targets - self.p_targets_last), (0.0,0.02), 2.0,value_at_margin=0.000001)
+                self.j_rew = tolerance(np.linalg.norm(self.p_targets - self.p_targets_last), (0.0, 0.02), 2.0,value_at_margin=0.000001)
 
                 self.total_reward *= self.j_rew
             self.p_targets_last = self.p_targets
