@@ -53,10 +53,10 @@ def run_learning (ALGO, env_config_path, algo_config_path,video_folder, weight):
 
     runner =\
     {
-        "PPO":  cur_dir+"/test_ppo2.py",
-        "TRPO": cur_dir+"/test_trpo.py",
-        "DDPG": cur_dir+"/test_ddpg.py",
-        "TD3":  cur_dir+"/test_TD3.py"
+        "PPO":  cur_dir+"/run_trained/test_ppo2.py",
+        "TRPO": cur_dir+"/run_trained/test_trpo.py",
+        "DDPG": cur_dir+"/run_trained/test_ddpg.py",
+        "TD3":  cur_dir+"/run_trained/test_TD3.py"
     }
     c_models[ALGO].set_algo_params()
     c_model = c_models[ALGO]()
