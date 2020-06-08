@@ -305,7 +305,11 @@ class ur10svh(ur10SvhBase):
         if "ball_dist" in rewards:
             if self.config["environment"]["reward_as_multiplication"]:
                 self.total_reward *= self.ball_reward
+
             if not self.config["environment"]["reward_as_multiplication"]:
+
+            if self.config["environment"]["reward_as_multiplication"]:
+
                 self.total_reward += self.ball_reward
         else:
             self.ball_reward = 1  # for normal curriculums
@@ -316,6 +320,7 @@ class ur10svh(ur10SvhBase):
         if "goal_dist" in rewards:
             if self.config["environment"]["reward_as_multiplication"]:
                 self.total_reward *= self.pose_reward
+
             if not self.config["environment"]["reward_as_multiplication"]:
                 self.total_reward += self.pose_reward
         else:
